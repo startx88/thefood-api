@@ -29,12 +29,13 @@ route.get('/all', userController.getUsers)
 //@ACCESS       PUBLIC
 route.post('/', [
     body("email", "email is required!").isEmail().custom((value, { req }) => {
-        return User.findOne({ email: value }).then(user => {
-            if (!user) {
-                return Promise.reject("Email not found!")
-            }
-            return true
-        })
+        return User.findOne({ email: value })
+            .then(user => {
+                if (!user) {
+                    return Promise.reject("Email not found!")
+                }
+                return true
+            })
     }),
     body("password", "password is required!")
         .isAlphanumeric()
