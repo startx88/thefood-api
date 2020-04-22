@@ -25,8 +25,12 @@ app.use((req, res, next) => {
 // routes
 const recipeRoute = require('./routes/recipe');
 const userRoute = require('./routes/user');
+const categoryRoute = require('./routes/category');
+const subcategoryRoute = require('./routes/subcat');
 app.use('/api/recipe', recipeRoute);
 app.use('/api/user', userRoute);
+app.use('/api/category', categoryRoute);
+app.use('/api/subcategory', subcategoryRoute);
 
 // Errors 
 app.use((req, res, next) => {

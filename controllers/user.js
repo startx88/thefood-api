@@ -3,7 +3,17 @@ const { validationResult } = require('express-validator');
 const { tryCatch } = require('../utils/tryCatch')
 // GET USERS
 exports.getUsers = (req, res, next) => {
-    tryCatch(async () => { }, next)
+    tryCatch(async () => {
+        const users = await User.find().select('-__v');
+        if (!users) {
+            return res.status(404).json({
+                message: "No user found",
+                data: users
+            })
+        }
+
+
+    }, next)
 }
 
 // SIGNUP USER
@@ -75,8 +85,6 @@ exports.userSignin = (req, res, next) => {
             data: user,
             token: token
         })
-
-
 
     }, next)
 }

@@ -32,8 +32,8 @@ authSchema.statics.generateToken = (user) => {
 }
 
 // DEGENERATE TOKEN
-authSchema.statics.degenerateToken = (token) => {
-    return jwt.verify(token)
+authSchema.statics.verifyToken = (token) => {
+    return jwt.verify(token, config.secret_key)
 }
 
 module.exports = mongoose.model("User", authSchema)

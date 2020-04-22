@@ -3,7 +3,8 @@ const Recipe = require('../model/recipe')
 const recipeController = require('../controllers/recipe');
 const multer = require("multer");
 const { body } = require('express-validator');
-const { filterFiles } = require('../utils/file')
+const { filterFiles } = require('../utils/file');
+const { auth } = require('../middleware/auth')
 
 // MULTER
 const storages = multer.diskStorage({
@@ -24,7 +25,7 @@ route.get("/", recipeController.getRecipes);
 route.get("/:recipeId", recipeController.getRecipe);
 
 // Add Recipe
-route.post("/", upload.single("image"), [
+route.post("/", auth, upload.single("image"), [
     body("name", "name is required!").not().isEmpty(),
     body("description", "description is required!").not().isEmpty(),
     body("ingredients", "ingredients is required!").custom((values, { req }) => {
@@ -36,13 +37,13 @@ route.post("/", upload.single("image"), [
 ], recipeController.addRecipe);
 
 // Update Recipe
-route.put("/:recipeId", recipeController.updateRecipe);
-route.delete("/:recipeId", recipeController.deleteRecipe);
+route.put("/:recipeId", auth, recipeController.updateRecipe);
+route.delete("/:recipeId", auth, recipeController.deleteRecipe);
 
 // Active and Deactive
-route.put("/activate/:recipeId", recipeController.activeRecipe);
-route.put("/deactivate/:recipeId", recipeController.deactiveRecipe);
+route.put("/activate/:recipeId", auth, recipeController.activeRecipe);
+route.put("/deactivate/:recipeId", auth, recipeController.deactiveRecipe);
 
-route.put("/:recipeId/upload", upload.single("image"), recipeController.uploadImage);
+route.put("/:recipeId/upload", auth, upload.single("image"), recipeController.uploadImage);
 
 module.exports = route;
