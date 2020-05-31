@@ -21,7 +21,7 @@ const upload = multer({
 //@URL          localhost:5000/api/category
 //@METHOD       GET
 //@ACCESS       PUBLIC
-route.get('/')
+route.get('/', categoryController.getCategories)
 
 //@NAME         add category
 //@URL          localhost:5000/api/category
@@ -36,19 +36,27 @@ route.post('/:categoryId?', upload.single('image'), [
 //@URL          localhost:5000/api/category/upload/:userId
 //@METHOD       PUT
 //@ACCESS       PRIVATE
-route.put('/upload/:categoryId', upload.single('image'), categoryController.uploadImage);
+route.put('/upload/:categoryId', upload.single('image'), categoryController.uploadCategoryImage);
 
 //@NAME         active category
 //@URL          localhost:5000/api/category/activate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
 
-route.post('/activate/:categoryId', categoryController.activeCategory);
+route.put('/activate/:categoryId', categoryController.activeCategory);
 
 //@NAME         deactive category
 //@URL          localhost:5000/api/category/deactivate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
-route.post('/deactivate/:categoryId', categoryController.deactivateCategory);
+route.put('/deactivate/:categoryId', categoryController.deactivateCategory);
+
+//@NAME         delete category
+//@URL          localhost:5000/api/category/activate/:categoryId
+//@METHOD       POST
+//@ACCESS       PRIVATE
+
+route.delete('/:categoryId', categoryController.deleteCategory);
+
 
 module.exports = route;
