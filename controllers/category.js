@@ -2,7 +2,8 @@ const Category = require("../model/category");
 const { validationResult } = require('express-validator');
 const { deleteFile } = require('../utils/file');
 const { tryCatch } = require('../utils/tryCatch')
-const { isnotImage } = require("../utils/validation")
+const { isnotImage } = require("../utils/validation");
+const { isAdmin } = require('../middleware/admin')
 // GET ALL CATEGORIES
 exports.getCategories = (req, res, next) => {
     const page = +req.query.page || 1;
@@ -30,7 +31,6 @@ exports.getCategories = (req, res, next) => {
                     url: 'http://localhost:5000' + req.baseUrl,
                     method: req.method
                 },
-
             }))
         })
 
@@ -43,6 +43,7 @@ exports.addUpdateCategory = (req, res, next) => {
     const categoryId = req.params.categoryId;
     tryCatch(async () => {
         const errors = validationResult(req);
+        await isAdmin(req.user.userId, next);
         if (!errors.isEmpty()) {
             const error = new Error(errors.array()[0].msg);
             error.statusCode = 403;
@@ -103,6 +104,7 @@ exports.addUpdateCategory = (req, res, next) => {
 exports.uploadCategoryImage = (req, res, next) => {
     const categoryId = req.params.categoryId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select('-__v');
         const image = req.file;
         if (!category) {
@@ -137,6 +139,7 @@ exports.uploadCategoryImage = (req, res, next) => {
 exports.deleteCategory = (req, res, next) => {
     const categoryId = req.params.categoryId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select("-__v");
         if (!category) {
             const error = new Error("No category found");
@@ -162,6 +165,7 @@ exports.activeCategory = (req, res, next) => {
     console.log('activate')
     const categoryId = req.params.categoryId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select("-__v");
         if (!category) {
             const error = new Error("No category found");
@@ -196,6 +200,7 @@ exports.activeCategory = (req, res, next) => {
 exports.deactivateCategory = (req, res, next) => {
     const categoryId = req.params.categoryId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select("-__v");
         if (!category) {
             const error = new Error("No category found");

@@ -18,8 +18,6 @@ const storages = multer.diskStorage({
 const upload = multer({ storage: storages, fileFilter: filterFiles })
 
 
-
-
 // All recipes
 route.get("/", recipeController.getRecipes);
 route.get("/:recipeId", recipeController.getRecipe);
@@ -27,23 +25,26 @@ route.get("/:recipeId", recipeController.getRecipe);
 // Add Recipe
 route.post("/", auth, upload.single("image"), [
     body("name", "name is required!").not().isEmpty(),
-    body("description", "description is required!").not().isEmpty(),
-    body("ingredients", "ingredients is required!").custom((values, { req }) => {
-        if (req.body.name === "" && req.body.qty === 0 && this.body.unit === "") {
-            return Promise.resolve(new Error("Please add ingredients."))
-        }
-        return true
-    })
+    body("type", "type is required!").not().isEmpty(),
+    body("price", "price is required!").not().isEmpty(),
+    body("menu", "menu is required!").not().isEmpty(),
 ], recipeController.addRecipe);
 
 // Update Recipe
-route.put("/:recipeId", auth, recipeController.updateRecipe);
+route.put("/:recipeId",
+    upload.single("image"),
+    body("name", "name is required!").not().isEmpty(),
+    body("type", "type is required!").not().isEmpty(),
+    body("price", "price is required!").not().isEmpty(),
+    body("menu", "menu is required!").not().isEmpty(),
+    auth,
+    recipeController.updateRecipe);
+
 route.delete("/:recipeId", auth, recipeController.deleteRecipe);
 
 // Active and Deactive
 route.put("/activate/:recipeId", auth, recipeController.activeRecipe);
 route.put("/deactivate/:recipeId", auth, recipeController.deactiveRecipe);
-
-route.put("/:recipeId/upload", auth, upload.single("image"), recipeController.uploadImage);
+route.put("/upload/:recipeId", auth, upload.single("image"), recipeController.uploadImage);
 
 module.exports = route;

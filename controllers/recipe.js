@@ -1,31 +1,31 @@
 const Recipe = require('../model/recipe');
-const { validationResult } = require('express-validator');
-const { deleteFile } = require('../utils/file')
+const Auth = require("../model/auth");
+const Restaurant = require('../model/restaurant');
+const { hasError, validationError } = require('../middleware/validation');
+const { noImage, filterFiles, deleteFile } = require('../utils');
+const { isVendor } = require('../middleware/vendor')
 
 // GET ALL RECIPES
 exports.getRecipes = async (req, res, next) => {
-    const page = +req.query.page || 1;
-    const PER_PAGE = 5;
-    try {
 
+    try {
+        const page = +req.query.page || 1;
+        const limit = req.query.limit !== "undefined" ? +req.query.limit || 6 : 0;
         const total = await Recipe.find().countDocuments();
-        const recipes = await Recipe.find().select("-__v");
-        if (!recipes) {
-            return res.status(404).json({
-                errors: {
-                    message: "There is no recipes",
-                    status: 404
-                }
-            })
-        }
+        const Recipes = await Recipe.find()
+            .find()
+            .sort({ title: 1 })
+            .limit(limit)
+            .skip((page - 1) * limit);
+
         return req.res.json({
             totals: total,
             next: page + 1,
             prev: page - 1,
-            pages: Math.floor(total / PER_PAGE),
-            data: recipes.map(recipe => ({
+            pages: Math.floor(total / limit),
+            data: Recipes.map(recipe => ({
                 ...recipe._doc,
-                image: 'http://localhost:5000/' + recipe.image
+                image: noImage('uploads/recipes/', recipe.image)
             }))
         })
     } catch (error) {
@@ -49,7 +49,7 @@ exports.getRecipe = async (req, res, next) => {
         return res.status(200).json({
             data: {
                 ...recipe._doc,
-                image: 'http://localhost:5000/' + recipe.image
+                image: noImage('uploads/recipes/', recipe.image)
             }
         })
     } catch (error) {
@@ -60,34 +60,29 @@ exports.getRecipe = async (req, res, next) => {
 // ADD RECIPE
 exports.addRecipe = async (req, res, next) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            const error = new Error(errors.array()[0].msg);
-            error.statusCode = 403;
-            throw next(error)
-        }
+        await isVendor(req.user.userId, next);
+        validationError(req);
+        const userId = req.user.userId;
+        const user = await Auth.findById(userId); // user profile
+        const restaurant = await Restaurant.findOne({ user: userId }); // restaurant
 
-        const { name, description, ingredients } = req.body;
+        const { name, type, price, description, ingredients, note, offer, menu } = req.body;
         const image = req.file;
-        console.log(req.file)
-
-        let slug = req.body.slug;
-        if (slug === "") {
-            slug = name.replace(/\s+/, '-').toLowerCase()
-        }
-
-        // if (!image) {
-        //     const error = new Error("Please upload file in these formats (JPG|JPEG|PNG|GIF|JIFF)");
-        //     error.statusCode = 400;
-        //     throw next(error)
-        // }
+        let slug = name.replace(/\s+/, '-').toLowerCase();
 
         const recipe = new Recipe({
+            restaurant: restaurant._id,
             name,
             slug,
+            type,
+            price,
+            offer,
+            menu,
+            note,
+            ingredients: ingredients,
             description,
-            ingredients
-        })
+            image: image ? image.path : "",
+        });
 
         const result = await recipe.save();
 
@@ -101,49 +96,43 @@ exports.addRecipe = async (req, res, next) => {
     }
 }
 
-
-
 // GET RECIPE
 exports.updateRecipe = async (req, res, next) => {
-    const recipeId = req.params.recipeId;
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            const error = new Error(errors.array()[0].msg);
-            error.statusCode = 403;
-            throw next(error)
-        }
-
-        const recipe = await Recipe.findById(recipeId).select("-__v");
+        validationError(req, next);
+        const recipeId = req.params.recipeId;
+        const userId = req.user.userId;
+        const restaurant = await Restaurant.findOne({ user: userId })
+        const recipe = await Recipe.findOne({ _id: recipeId, restaurant: restaurant._id });
         // not match with any id
         if (!recipe) {
             const error = new Error("No recipe found");
             error.statusCode = 404;
             throw next(error)
         }
-
-        const { name, description, ingredients } = req.body;
+        const { name, type, price, description, ingredients, note, offer, menu } = req.body;
         const image = req.file;
-
-        let slug = req.body.slug;
-        if (slug === "") {
-            slug = name.replace(/\s+/, '-').toLowerCase()
-        }
-
+        let slug = name.replace(/\s+/, '-').toLowerCase();
         recipe.name = name;
         recipe.slug = slug;
+        recipe.type = type;
+        recipe.price = price;
+        recipe.offer = offer;
+        recipe.menu = menu;
+        recipe.note = note;
+        recipe.increment = ingredients;
         recipe.description = description;
         if (image) {
             deleteFile(recipe.image);
             recipe.image = image.path;
         }
-        recipe.insertAt = Date.now()
+        recipe.insertAt = Date.now();
         const result = await recipe.save();
         return res.status(201).json({
             message: "Recipe updated successfully",
             data: {
                 ...result._doc,
-                image: 'http://localhost:5000/' + result.image
+                image: noImage('uploads/recipes/', recipe.image)
             }
         });
 
@@ -154,9 +143,9 @@ exports.updateRecipe = async (req, res, next) => {
 
 // GET RECIPE
 exports.deleteRecipe = async (req, res, next) => {
-    const recipeId = req.params.recipeId;
     try {
-        const recipe = await Recipe.findById(recipeId).select("-__v");
+        const recipeId = req.params.recipeId;
+        const recipe = await Recipe.findById(recipeId);
         if (!recipe) {
             const error = new Error("No recipe found");
             error.statusCode = 404;
@@ -246,9 +235,9 @@ exports.deactiveRecipe = async (req, res, next) => {
 
 // UPLOAD RECIPE IMAGE
 exports.uploadImage = async (req, res, next) => {
-    const recipeId = req.params.recipeId;
     try {
-        const recipe = await Recipe.findById(recipeId).select("-__v");
+        const recipeId = req.params.recipeId;
+        const recipe = await Recipe.findById(recipeId);
         const image = req.file;
 
         if (!recipe) {
@@ -268,15 +257,12 @@ exports.uploadImage = async (req, res, next) => {
             deleteFile(recipe.image);
             recipe.image = image.path;
         }
-
         const result = await recipe.save();
-
         return res.status(200).json({
             message: "Image uploaded successfully",
             recipeId: result._id,
             data: result,
         })
-
     } catch (error) {
         next(error)
     }

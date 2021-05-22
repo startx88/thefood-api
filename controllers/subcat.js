@@ -3,7 +3,7 @@ const { validationResult } = require('express-validator');
 const { deleteFile } = require('../utils/file');
 const { tryCatch } = require('../utils/tryCatch')
 const { isnotImage } = require("../utils/validation")
-
+const { isAdmin } = require('../middleware/admin')
 
 // GET ALL CATEGORIES
 exports.getSubCategories = (req, res, next) => {
@@ -43,6 +43,7 @@ exports.getSubCategories = (req, res, next) => {
 exports.addUpdateSubCategory = (req, res, next) => {
     const subcatId = req.params.subcatId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             const error = new Error(errors.array()[0].msg);
@@ -106,6 +107,7 @@ exports.addUpdateSubCategory = (req, res, next) => {
 exports.uploadsubCategoryImage = (req, res, next) => {
     const subcatId = req.params.subcatId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const subcat = await Subcategory.findById(subcatId).select('-__v');
         const image = req.file;
         if (!subcat) {
@@ -140,6 +142,7 @@ exports.uploadsubCategoryImage = (req, res, next) => {
 exports.deleteSubcategory = (req, res, next) => {
     const subcatId = req.params.subcatId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const subcat = await Subcategory.findById(subcatId).select("-__v");
         if (!subcat) {
             const error = new Error("No category found");
@@ -164,6 +167,7 @@ exports.deleteSubcategory = (req, res, next) => {
 exports.activesubCategory = (req, res, next) => {
     const subcatId = req.params.subcatId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const subcat = await Subcategory.findById(subcatId).select("-__v");
         if (!subcat) {
             const error = new Error("No category found");
@@ -198,6 +202,7 @@ exports.activesubCategory = (req, res, next) => {
 exports.deactivatesubCategory = (req, res, next) => {
     const subcatId = req.params.subcatId;
     tryCatch(async () => {
+        await isAdmin(req.user.userId, next);
         const subcat = await Subcategory.findById(subcatId).select("-__v");
         if (!subcat) {
             const error = new Error("No category found");

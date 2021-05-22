@@ -4,7 +4,7 @@ const multer = require('multer')
 const subcatController = require('../controllers/subcat')
 const { body } = require('express-validator')
 const { filterFiles } = require('../utils/file');
-
+const { auth } = require('../middleware/auth');
 // UPLOAD CATEGORY IMAGE
 const upload = multer({
     storage: multer.diskStorage({
@@ -31,33 +31,33 @@ route.post('/:subcatId?', upload.single('image'), [
     body("name", "name is required!").notEmpty(),
     body("description", "description is required!").notEmpty(),
     // body("category", "category is required!").notEmpty()
-], subcatController.addUpdateSubCategory);
+], auth, subcatController.addUpdateSubCategory);
 
 //@NAME         image upload
 //@URL          localhost:5000/api/category/upload/:userId
 //@METHOD       PUT
 //@ACCESS       PRIVATE
-route.put('/upload/:subcatId', upload.single('image'), subcatController.uploadsubCategoryImage);
+route.put('/upload/:subcatId', upload.single('image'), auth, subcatController.uploadsubCategoryImage);
 
 //@NAME         active category
 //@URL          localhost:5000/api/category/activate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
 
-route.put('/activate/:subcatId', subcatController.activesubCategory);
+route.put('/activate/:subcatId', auth, subcatController.activesubCategory);
 
 //@NAME         deactive category
 //@URL          localhost:5000/api/category/deactivate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
-route.put('/deactivate/:subcatId', subcatController.deactivatesubCategory);
+route.put('/deactivate/:subcatId', auth, subcatController.deactivatesubCategory);
 
 //@NAME         delete category
 //@URL          localhost:5000/api/category/activate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
 
-route.delete('/:subcatId', subcatController.deleteSubcategory);
+route.delete('/:subcatId', auth, subcatController.deleteSubcategory);
 
 
 module.exports = route;
