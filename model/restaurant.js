@@ -25,7 +25,7 @@ const restaurantSchema = new Schema({
   menus: [
     {
       title: { type: String, required: true, default: "" },
-      slug: { type: String, required: true, default: (a) => console.log(a) },
+      slug: { type: String, required: true, },
       active: { type: Boolean, default: true, }
     }
   ],
@@ -41,3 +41,7 @@ const restaurantSchema = new Schema({
 
 
 module.exports = mongoose.model("Restaurant", restaurantSchema);
+
+/**
+ * name, address, location
+ */

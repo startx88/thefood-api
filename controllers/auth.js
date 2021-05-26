@@ -32,7 +32,8 @@ exports.userRegister = async function (req, res, next) {
     return res.status(201).json({
       message: "User reigstered successfully!",
       token: token,
-      data: result
+      data: result,
+      expiresIn: 3600
     })
 
   } catch (error) {
@@ -66,15 +67,16 @@ exports.userLogin = async function (req, res, next) {
       throw next(error)
     }
     const token = await Auth.generateToken(auth);
-    // autauthhUser.token = token;
-    // auth.tokenExpire = getTime(1);
-    // await auth.save();
+    auth.token = token;
+    auth.tokenExpire = getTime(1);
+    await auth.save();
 
     // send user data
     return res.status(201).json({
       message: "User signin successfully!",
       token: token,
-      data: auth
+      data: auth,
+      expiresIn: 3600
     })
   } catch (error) {
     next(error);

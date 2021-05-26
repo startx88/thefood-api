@@ -33,6 +33,31 @@ exports.getAllRestaurants = async function (req, res, next) {
   } catch (err) { next(err) }
 }
 
+
+// get restaurant
+exports.getMyRestaurant = async function (req, res, next) {
+  try {
+    await isVendor(req.user.userId, next);
+    const userId = req.user.userId;
+
+    const restaurant = await Restaurant.findOne({ user: userId });
+    if (!restaurant) {
+      throw new Error("There is no restaurant");
+    }
+
+    return res.status(200).json({
+      message: 'Restaurant data fetched!',
+      id: restaurant._id,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image)
+      }
+    })
+
+  } catch (err) { next(err) }
+}
+
+
 // get restaurant
 exports.getRestaurant = async function (req, res, next) {
   try {
@@ -43,8 +68,12 @@ exports.getRestaurant = async function (req, res, next) {
     }
 
     return res.status(200).json({
+      message: 'Restaurant data fetched!',
       restaurantId: Id,
-      data: restaurant
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image)
+      }
     })
 
   } catch (err) { next(err) }
@@ -72,7 +101,7 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       await restaurant.save();
       return res.status(200).json({
         message: "Restaurant updated",
-        restaurantId: Id,
+        id: Id,
         data: restaurant
       })
     } else {
@@ -93,6 +122,7 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       await newRestro.save();
       return res.status(200).json({
         message: "Restaurants addedd successfully",
+        id: newRestro._id,
         data: newRestro
       })
     }
@@ -129,6 +159,7 @@ exports.addRestaurantBanner = async function (req, res, next) {
     await restaurant.save();
     return res.status(200).json({
       message: "Restaurant hero image updated successfully",
+      id: restaurant._id,
       data: restaurant
     });
   }

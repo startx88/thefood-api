@@ -11,10 +11,8 @@ const { hasError, validationError } = require('../middleware/validation');
  */
 exports.getMenuByRestro = async function (req, res, next) {
   try {
-    await isVendor(req.user.userId, next);
-    const user = req.user.userId;
     const restarantId = req.params.restarantId;
-    const restaurant = await Restaurant.findOne({ user: user, _id: restarantId });
+    const restaurant = await Restaurant.findById(restarantId);
     const menu = await Menu.find({ restaurant: restarantId });
     // error if not found
     if (!menu) {

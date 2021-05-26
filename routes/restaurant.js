@@ -1,7 +1,7 @@
 const route = require('express').Router();
 const Restaurant = require("../model/restaurant");
 const multer = require('multer')
-const { getAllRestaurants, getRestaurant, addMenus, addRestaurantBanner, addUpdateRestaurant } = require('../controllers/restaurant')
+const { getAllRestaurants, getRestaurant, addMenus, addRestaurantBanner, getMyRestaurant, addUpdateRestaurant } = require('../controllers/restaurant')
 const { body } = require('express-validator')
 const { filterFiles } = require('../utils/file');
 const { auth } = require('../middleware/auth');
@@ -23,6 +23,12 @@ const upload = multer({
 //@METHOD       GET
 //@ACCESS       PUBLIC
 route.get('/', getAllRestaurants);
+
+//@NAME         Restaurant
+//@URL          localhost:5000/api/restaurant
+//@METHOD       GET
+//@ACCESS       PUBLIC
+route.get('/me', auth, getMyRestaurant);
 
 //@NAME         Restaurant
 //@URL          localhost:5000/api/restaurant

@@ -162,7 +162,6 @@ exports.deleteCategory = (req, res, next) => {
 
 // Active Category
 exports.activeCategory = (req, res, next) => {
-    console.log('activate')
     const categoryId = req.params.categoryId;
     tryCatch(async () => {
         await isAdmin(req.user.userId, next);

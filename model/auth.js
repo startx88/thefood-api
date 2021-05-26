@@ -21,6 +21,7 @@ const authSchema = new Schema({
   toJSON: {
     transform(doc, ret) {
       delete ret.__v;
+      ret.password = null;
     }
   }
 });

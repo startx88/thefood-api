@@ -7,7 +7,7 @@ const { auth } = require('../middleware/auth')
 /**
  * URL        :       http://localhost:5000/api/menu
  */
-route.get('/:restarantId', auth, getMenuByRestro);
+route.get('/:restarantId', getMenuByRestro);
 
 
 /**
