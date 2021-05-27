@@ -47,6 +47,7 @@ exports.addUpdateMenu = async function (req, res, next) {
     const { title } = req.body;
     const slug = title.replace(/\s+/, '-');
     if (menu) {
+      console.log('updated')
       menu.title = title;
       menu.slug = slug;
       menu.insertAt = Date.now()
@@ -67,6 +68,8 @@ exports.addUpdateMenu = async function (req, res, next) {
         title,
         slug
       })
+
+      console.log('add new', newMenu)
 
       await newMenu.save();
       return res.status(201).json({

@@ -1,6 +1,6 @@
 const Category = require("../model/category");
 const { validationResult } = require('express-validator');
-const { deleteFile } = require('../utils/file');
+const { noImage, deleteFile } = require('../utils');
 const { tryCatch } = require('../utils/tryCatch')
 const { isnotImage } = require("../utils/validation");
 const { isAdmin } = require('../middleware/admin')
@@ -19,18 +19,14 @@ exports.getCategories = (req, res, next) => {
         }
         return res.status(200).json({
             message: "No category found",
-            totals: totals,
-            page: page,
-            next: page + 1,
-            prev: page - 1,
-            hasNext: Math.floor(totals / PER_PAGE),
+            // totals: totals,
+            // page: page,
+            // next: page + 1,
+            // prev: page - 1,
+            // hasNext: Math.floor(totals / PER_PAGE),
             data: categories.map(cat => ({
                 ...cat._doc,
-                image: 'http://localhost:5000/' + cat.image,
-                api: {
-                    url: 'http://localhost:5000' + req.baseUrl,
-                    method: req.method
-                },
+                image: noImage('uploads/category/', cat.image),
             }))
         })
 
@@ -71,8 +67,7 @@ exports.addUpdateCategory = (req, res, next) => {
                 message: "Category updated successfull.",
                 data: {
                     ...result._doc,
-                    categoryId: categoryId,
-                    image: 'http://localhost:5000/' + result.image
+                    image: noImage('uploads/category/', result.image),
                 }
             });
         } else {
@@ -93,7 +88,7 @@ exports.addUpdateCategory = (req, res, next) => {
                 message: "Category added successfully.",
                 data: {
                     ...result._doc,
-                    image: 'http://localhost:5000/' + result.image
+                    image: noImage('uploads/category/', result.image),
                 }
             });
         }
@@ -124,10 +119,9 @@ exports.uploadCategoryImage = (req, res, next) => {
 
         return res.status(200).json({
             message: "Category image uploaded successfully.",
-            categoryId: categoryId,
             data: {
                 ...category._doc,
-                image: 'http://localhost:5000/' + category.image
+                image: noImage('uploads/category/', category.image),
             }
         });
 
@@ -154,7 +148,7 @@ exports.deleteCategory = (req, res, next) => {
         return res.status(200).json({
             message: "Category deleted successfully!",
             data: category,
-            categoryId: categoryId
+            id: categoryId
         })
 
     }, next)
@@ -178,7 +172,7 @@ exports.activeCategory = (req, res, next) => {
                 categoryId: categoryId,
                 data: {
                     ...category._doc,
-                    image: 'http://localhost:5000/' + category.image
+                    image: noImage('uploads/category/', category.image),
                 }
             })
         }
@@ -189,7 +183,7 @@ exports.activeCategory = (req, res, next) => {
             categoryId: categoryId,
             data: {
                 ...category._doc,
-                image: 'http://localhost:5000/' + category.image
+                image: noImage('uploads/category/', category.image),
             }
         })
 
@@ -212,7 +206,7 @@ exports.deactivateCategory = (req, res, next) => {
                 categoryId: categoryId,
                 data: {
                     ...category._doc,
-                    image: 'http://localhost:5000/' + category.image
+                    image: noImage('uploads/category/', category.image),
                 }
             })
         }
@@ -223,7 +217,7 @@ exports.deactivateCategory = (req, res, next) => {
             categoryId: categoryId,
             data: {
                 ...category._doc,
-                image: 'http://localhost:5000/' + category.image
+                image: noImage('uploads/category/', category.image),
             }
         })
 

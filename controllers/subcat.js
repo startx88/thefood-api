@@ -1,6 +1,6 @@
 const Subcategory = require("../model/subcat");
 const { validationResult } = require('express-validator');
-const { deleteFile } = require('../utils/file');
+const { noImage, deleteFile } = require('../utils');
 const { tryCatch } = require('../utils/tryCatch')
 const { isnotImage } = require("../utils/validation")
 const { isAdmin } = require('../middleware/admin')
@@ -20,18 +20,14 @@ exports.getSubCategories = (req, res, next) => {
         }
         return res.status(200).json({
             message: "No sub-category found",
-            totals: totals,
-            page: page,
-            next: page + 1,
-            prev: page - 1,
-            hasNext: Math.floor(totals / PER_PAGE),
+            // totals: totals,
+            // page: page,
+            // next: page + 1,
+            // prev: page - 1,
+            // hasNext: Math.floor(totals / PER_PAGE),
             data: subcats.map(subcat => ({
                 ...subcat._doc,
-                image: 'http://localhost:5000/' + subcat.image,
-                api: {
-                    url: 'http://localhost:5000' + req.baseUrl,
-                    method: req.method
-                },
+                image: noImage('uploads/subcategory/', subcat.image),
             }))
         })
 
@@ -73,8 +69,7 @@ exports.addUpdateSubCategory = (req, res, next) => {
                 message: "Subcategory updated successfull.",
                 data: {
                     ...subcatExist._doc,
-                    subcatId: subcatId,
-                    image: 'http://localhost:5000/' + subcatExist.image
+                    image: noImage('uploads/subcategory/', subcatExist.image),
                 }
             });
         } else {
@@ -96,7 +91,7 @@ exports.addUpdateSubCategory = (req, res, next) => {
                 message: "Subcategory added successfully.",
                 data: {
                     ...subcat._doc,
-                    image: 'http://localhost:5000/' + subcat.image
+                    image: noImage('uploads/subcategory/', subcat.image),
                 }
             });
         }
@@ -130,7 +125,7 @@ exports.uploadsubCategoryImage = (req, res, next) => {
             subcatId: subcatId,
             data: {
                 ...subcat._doc,
-                image: 'http://localhost:5000/' + subcat.image
+                image: noImage('uploads/subcategory/', subcat.image),
             }
         });
 
@@ -157,7 +152,7 @@ exports.deleteSubcategory = (req, res, next) => {
         return res.status(200).json({
             message: "Category deleted successfully!",
             data: subcat,
-            subcatId: subcatId
+            id: subcatId
         })
 
     }, next)
@@ -181,7 +176,7 @@ exports.activesubCategory = (req, res, next) => {
                 subcatId: subcatId,
                 data: {
                     ...subcat._doc,
-                    image: 'http://localhost:5000/' + subcat.image
+                    image: noImage('uploads/subcategory/', subcat.image),
                 }
             })
         }
@@ -192,7 +187,7 @@ exports.activesubCategory = (req, res, next) => {
             recipeId: categoryId,
             data: {
                 ...subcat._doc,
-                image: 'http://localhost:5000/' + subcat.image
+                image: noImage('uploads/subcategory/', subcat.image),
             }
         })
 
@@ -215,7 +210,7 @@ exports.deactivatesubCategory = (req, res, next) => {
                 subcatId: subcatId,
                 data: {
                     ...subcat._doc,
-                    image: 'http://localhost:5000/' + subcat.image
+                    image: noImage('uploads/subcategory/', subcat.image),
                 }
             })
         }
@@ -226,7 +221,7 @@ exports.deactivatesubCategory = (req, res, next) => {
             subcatId: subcatId,
             data: {
                 ...subcat._doc,
-                image: 'http://localhost:5000/' + subcat.image
+                image: noImage('uploads/subcategory/', subcat.image),
             }
         })
 
