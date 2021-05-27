@@ -1,9 +1,8 @@
 const Restaurant = require('../model/restaurant');
 const Auth = require("../model/auth");
 const { hasError, validationError } = require('../middleware/validation');
-const { noImage, deleteFile } = require('../utils');
+const { noImage, deleteFile, hasNoImage } = require('../utils');
 const { isVendor } = require('../middleware/vendor')
-
 
 // get all restaurant
 exports.getAllRestaurants = async function (req, res, next) {
@@ -16,8 +15,8 @@ exports.getAllRestaurants = async function (req, res, next) {
       .sort({ title: 1 })
       .limit(limit)
       .skip((page - 1) * limit);
-
     return res.status(200).json({
+      message: "Restaurants fetched successfully",
       total: total,
       currentPage: page,
       totalPage: Math.ceil(total / limit),
@@ -34,17 +33,41 @@ exports.getAllRestaurants = async function (req, res, next) {
 }
 
 
+/**
+ * Get Restaurant by id
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.getRestaurant = async function (req, res, next) {
+  try {
+    const Id = req.params.id;
+    const restaurant = await Restaurant.findById(Id);
+    if (!restaurant) {
+      throw new Error("There is no restaurant");
+    }
+    return res.status(200).json({
+      message: 'Restaurant data fetched!',
+      id: Id,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image)
+      }
+    })
+
+  } catch (err) { next(err) }
+}
+
 // get restaurant
 exports.getMyRestaurant = async function (req, res, next) {
   try {
-    await isVendor(req.user.userId, next);
     const userId = req.user.userId;
-
+    await isVendor(req.user.userId, next);
     const restaurant = await Restaurant.findOne({ user: userId });
     if (!restaurant) {
       throw new Error("There is no restaurant");
     }
-
     return res.status(200).json({
       message: 'Restaurant data fetched!',
       id: restaurant._id,
@@ -53,56 +76,77 @@ exports.getMyRestaurant = async function (req, res, next) {
         image: noImage('uploads/restaurants/', restaurant.image)
       }
     })
-
   } catch (err) { next(err) }
 }
 
 
-// get restaurant
-exports.getRestaurant = async function (req, res, next) {
-  try {
-    const Id = req.params.id;
-    const restaurant = await Restaurant.findById(Id);
-    if (!restaurant) {
-      throw new Error("There is no restaurant");
-    }
 
-    return res.status(200).json({
-      message: 'Restaurant data fetched!',
-      restaurantId: Id,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image)
-      }
-    })
-
-  } catch (err) { next(err) }
-}
 
 // add / udpate addUpdateRestaurant
 exports.addUpdateRestaurant = async function (req, res, next) {
   try {
-    await isVendor(req.user.userId, next);
     validationError(req, next);
-    const Id = req.params.id;
-    const { name, costFor, type, landline, address } = req.body;
+    await isVendor(req.user.userId, next);
+    const Id = req.params.id; // update id
+    const {
+      name,
+      mobile,
+      landline,
+      owener,
+      manager,
+      orderContact,
+      restaurantType,
+      yearOfBirth,
+      establistmentType,
+      cuisines,
+      openTime,
+      closeTime,
+      daysOpenInWeek,
+      costFor,
+      address
+    } = req.body;
     const image = req.image;
-    const restaurant = await Restaurant.findById(Id);
+    const menuImage = req.menuImage;
     const user = await Auth.findById(req.user.userId);
-    const isRestaurantExist = await Restaurant.findOne({ user: req.user.userId })
+    const restaurant = await Restaurant.findById(Id);
+    const isRestaurantExist = await Restaurant.findOne({ user: req.user.userId });
+
+    hasNoImage(image);
 
     if (restaurant) {
-      restaurant.type = type;
+      restaurant.name = name;
+      restaurant.mobile = mobile;
       restaurant.landline = landline;
+      restaurant.ownerName = owener;
+      restaurant.manager = manager;
+      restaurant.orderContact = orderContact;
+      restaurant.restaurantType = restaurantType;
+      restaurant.yearOfBirth = yearOfBirth;
+      restaurant.establistmentType = establistmentType;
+      restaurant.cuisines = cuisines;
+      restaurant.openTime = openTime;
+      restaurant.closeTime = closeTime;
+      restaurant.daysOpenInWeek = daysOpenInWeek;
+      restaurant.menuImage = menuImage.path;
+      restaurant.costFor = costFor;
+      restaurant.address = address;
       if (image) {
         deleteFile(restaurant.image);
         restaurant.image = image.path;
+      }
+      if (menuImage) {
+        deleteFile(restaurant.menuImage);
+        restaurant.menuImage = image.path;
       }
       await restaurant.save();
       return res.status(200).json({
         message: "Restaurant updated",
         id: Id,
-        data: restaurant
+        data: {
+          ...restaurant._doc,
+          image: noImage('uploads/restaurants/', restaurant.image),
+          menuImage: noImage('uploads/restaurants/', restaurant.menuImage),
+        }
       })
     } else {
       if (isRestaurantExist) {

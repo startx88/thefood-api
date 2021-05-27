@@ -10,9 +10,11 @@ const menuSchema = new Schema({
   insertAt: { type: Date, default: Date.now }
 }, {
   toJSON: {
-    transform(doc, _ret) {
-      delete _ret.__v;
-    }
+    transform(_, ret) {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    },
   },
 });
 

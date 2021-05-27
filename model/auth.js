@@ -19,9 +19,11 @@ const authSchema = new Schema({
   insertAt: { type: Date, default: Date.now }
 }, {
   toJSON: {
-    transform(doc, ret) {
-      delete ret.__v;
+    transform(_, ret) {
+      ret.id = ret._id;
       ret.password = null;
+      delete ret._id;
+      delete ret.__v;
     }
   }
 });

@@ -24,17 +24,18 @@ const upload = multer({
 //@ACCESS       PUBLIC
 route.get('/', getAllRestaurants);
 
-//@NAME         Restaurant
-//@URL          localhost:5000/api/restaurant
+//@NAME         Restaurant detail
+//@URL          localhost:5000/api/restaurant/:restaurantId
+//@METHOD       GET
+//@ACCESS       PUBLIC
+route.get('/:id', getRestaurant);
+
+//@NAME         Restaurant vendor detail
+//@URL          localhost:5000/api/restaurant/me
 //@METHOD       GET
 //@ACCESS       PUBLIC
 route.get('/me', auth, getMyRestaurant);
 
-//@NAME         Restaurant
-//@URL          localhost:5000/api/restaurant
-//@METHOD       GET
-//@ACCESS       PUBLIC
-route.get('/:id', getRestaurant)
 
 //@NAME         Restaurant
 //@URL          localhost:5000/api/restaurant/:id?

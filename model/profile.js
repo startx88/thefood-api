@@ -26,7 +26,9 @@ const profileSchema = new Schema({
     },
 }, {
     toJSON: {
-        transform(doc, _ret, options) {
+        transform(_, ret) {
+            ret.id = ret._id;
+            delete ret._id;
             delete _ret.__v;
         }
     },

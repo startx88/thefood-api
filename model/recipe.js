@@ -24,7 +24,9 @@ const recipeSchema = new Schema({
     insertAt: { type: Date, default: Date.now }
 }, {
     toJSON: {
-        transform(doc, ret) {
+        transform(_, ret) {
+            ret.id = ret._id;
+            delete ret._id;
             delete ret.__v;
         },
     },

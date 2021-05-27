@@ -1,15 +1,34 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
 // restaurant schema
 const restaurantSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User' },
   name: { type: String, required: true, trim: true },
-  image: { type: String },
-  type: { type: String, required: true, trim: true, enum: ['veg', 'non-veg'] },
-  ownerName: { type: String },
   mobile: { type: String, required: true, trim: true, unique: true },
-  landline: { type: String, trim: true },
+  landline: { type: String },
+  image: { type: String, required: true, trim: true },
+  owner: {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, unique: true },
+    mobile: { type: String, required: true, trim: true, unique: true, default: this.mobile },
+  },
+  manager: {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, unique: true },
+    mobile: { type: String, required: true, trim: true, unique: true, default: this.mobile },
+  },
+  orderContact: { type: String, required: true, trim: true },
+  restaurantType: { type: String, required: true, trim: true, enum: ['veg', 'non-veg', 'both'] },
+  yearOfBirth: { type: Date, required: true, trim: true },
+  establistmentType: {
+    type: { type: String, required: true, trim: true, enum: ['dine-in', 'delivery', 'both'] },
+    foodOffer: { type: [String] }
+  },
+  cuisines: { type: [String], required: true, trim: true },
+  openAt: { type: Date, required: true, trim: true },
+  closeAt: { type: Date, required: true, trim: true },
+  daysOpenInWeek: { type: [String] },
+  menuImage: { type: String },
   costFor: { type: Number, },
   address: {
     address: { type: String, required: true, trim: true },// k-81, arihant arden
@@ -22,18 +41,15 @@ const restaurantSchema = new Schema({
       lng: { type: String }
     }
   },
-  menus: [
-    {
-      title: { type: String, required: true, default: "" },
-      slug: { type: String, required: true, },
-      active: { type: Boolean, default: true, }
-    }
-  ],
+  active: { type: Boolean, default: true },
+  insertAt: { type: Date, default: Date.now }
 }, {
   toJSON: {
-    transform(doc, _ret) {
-      delete _ret.__v;
-    }
+    transform(_, ret) {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    },
   },
   timestamps: true
 })

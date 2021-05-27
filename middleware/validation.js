@@ -1,11 +1,21 @@
 const { validationResult } = require('express-validator')
-
+/**
+ * Error handler
+ * @param {*} message 
+ * @param {*} statusCode 
+ * @param {*} next 
+ */
 const hasError = (message = "not found", statusCode = 404, next) => {
     const error = new Error(message);
     error.statusCode = statusCode;
     throw next(error);
 }
 
+/**
+ * Validation Error
+ * @param {*} req 
+ * @param {*} next 
+ */
 const validationError = (req, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
