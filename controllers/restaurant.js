@@ -1,8 +1,9 @@
-const Restaurant = require('../model/restaurant');
 const Auth = require("../model/auth");
+const Restaurant = require('../model/restaurant');
 const { hasError, validationError } = require('../middleware/validation');
 const { noImage, deleteFile, hasNoImage } = require('../utils');
 const { isVendor } = require('../middleware/vendor')
+const { isAdmin } = require('../middleware/admin')
 
 // get all restaurant
 exports.getAllRestaurants = async function (req, res, next) {
@@ -173,7 +174,7 @@ exports.addUpdateRestaurant = async function (req, res, next) {
         address: address
       });
       await newRestro.save();
-      return res.status(200).json({
+      return res.status(201).json({
         message: "Restaurants addedd successfully",
         data: {
           ...newRestro._doc,
@@ -243,14 +244,13 @@ exports.addRestaurantBanner = async function (req, res, next) {
  */
 exports.openRestaurant = async function (req, res, next) {
   try {
-    await isAdmin(req.user.userId);
+    await isVendor(req.user.userId);
     const restarantId = req.params.restarantId;
     const restaurant = await Restaurant.findById(restarantId);
     console.log('restarantId', restarantId, restaurant)
     if (!restaurant) {
       throw new Error("Restaurant not found");
     }
-
     restaurant.isOpen = true;
     restaurant.isClose = false;
     await restaurant.save();
@@ -273,13 +273,12 @@ exports.openRestaurant = async function (req, res, next) {
  */
 exports.closeRestaurant = async function (req, res, next) {
   try {
-    await isAdmin(req.user.userId);
+    await isVendor(req.user.userId);
     const restarantId = req.params.restarantId;
     const restaurant = await Restaurant.findById(restarantId);
     if (!restaurant) {
       throw new Error("Restaurant not found");
     }
-
     restaurant.isClose = true;
     restaurant.isOpen = false;
     await restaurant.save();

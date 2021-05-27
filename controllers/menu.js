@@ -1,7 +1,10 @@
 const Menu = require('../model/menu');
 const Restaurant = require('../model/restaurant');
-const { isVendor } = require('../middleware/vendor')
 const { hasError, validationError } = require('../middleware/validation');
+const { noImage, deleteFile, hasNoImage } = require('../utils');
+const { isVendor } = require('../middleware/vendor')
+const { isAdmin } = require('../middleware/admin')
+
 
 /**
  * Get menu by restaurants
@@ -9,10 +12,9 @@ const { hasError, validationError } = require('../middleware/validation');
  * @param {*} res 
  * @param {*} next 
  */
-exports.getMenuByRestro = async function (req, res, next) {
+exports.getMenuByRestaurant = async function (req, res, next) {
   try {
     const restarantId = req.params.restarantId;
-    const restaurant = await Restaurant.findById(restarantId);
     const menu = await Menu.find({ restaurant: restarantId });
     // error if not found
     if (!menu) {
@@ -20,7 +22,7 @@ exports.getMenuByRestro = async function (req, res, next) {
     }
 
     return res.status(200).json({
-      message: "Menu fetched for " + restaurant.name,
+      message: "Menu fetched",
       data: menu
     })
 
@@ -35,27 +37,25 @@ exports.getMenuByRestro = async function (req, res, next) {
  */
 exports.addUpdateMenu = async function (req, res, next) {
   try {
-    await isVendor(req.user.userId, next);
     validationError(req, next);
-    const userId = req.user.userId;
+    await isVendor(req.user.userId, next);
     const restarantId = req.params.restarantId;
     const menuId = req.params.menuId;
-    //const restaurant = await Restaurant.findOne({ user: user, _id: restarantId });
     const menu = await Menu.findOne({ _id: menuId, restaurant: restarantId });
 
     // body
-    const { title } = req.body;
+    const { title, price, offer } = req.body;
     const slug = title.replace(/\s+/, '-');
     if (menu) {
-      console.log('updated')
       menu.title = title;
       menu.slug = slug;
+      menu.price = price;
+      menu.offer = offer;
       menu.insertAt = Date.now()
       await menu.save();
-
       return res.status(200).json({
         message: "Menu updated successfully",
-        menuId: menuId,
+        id: menuId,
         data: menu
       })
     } else {
@@ -66,15 +66,14 @@ exports.addUpdateMenu = async function (req, res, next) {
       const newMenu = new Menu({
         restaurant: restarantId,
         title,
-        slug
+        slug,
+        price,
+        offer
       })
-
-      console.log('add new', newMenu)
-
       await newMenu.save();
       return res.status(201).json({
         message: "Menu created successfully",
-        menuId: menuId,
+        id: menuId,
         data: newMenu
       })
     }
@@ -103,8 +102,8 @@ exports.deleteMenu = async function (req, res, next) {
     await menu.remove();
     return res.status(200).json({
       message: "Menu deleted successfully!",
-      data: menu,
-      menuId: menuId
+      id: menuId,
+      data: menu
     })
   } catch (err) { next(err) }
 }

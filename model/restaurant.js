@@ -18,7 +18,7 @@ const restaurantSchema = new Schema({
     mobile: { type: String, required: true, trim: true, unique: true, default: this.mobile },
   },
   orderContact: { type: String, required: true, trim: true },
-  restaurantType: { type: String, required: true, trim: true, enum: ['veg', 'non-veg', 'both'] },
+  restaurantType: { type: String, required: true, trim: true, enum: ['veg', 'nonveg', 'both'] },
   yearOfBirth: { type: Date, required: true, trim: true },
   establistmentType: {
     type: { type: String, required: true, trim: true, enum: ['dine-in', 'delivery', 'both'] },
