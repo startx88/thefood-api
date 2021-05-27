@@ -17,7 +17,6 @@ const storages = multer.diskStorage({
 });
 const upload = multer({ storage: storages, fileFilter: filterFiles })
 
-
 // All recipes
 route.get("/", getRecipes);
 route.get("/:recipeId", getRecipe);

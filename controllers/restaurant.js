@@ -8,6 +8,7 @@ const { isAdmin } = require('../middleware/admin')
 // get all restaurant
 exports.getAllRestaurants = async function (req, res, next) {
   try {
+    const filters = req.query;
     const page = +req.query.page || 1;
     const limit = req.query.limit !== "undefined" ? +req.query.limit || 6 : 0;
     const total = await Restaurant.find().countDocuments();
@@ -16,6 +17,16 @@ exports.getAllRestaurants = async function (req, res, next) {
       .sort({ title: 1 })
       .limit(limit)
       .skip((page - 1) * limit);
+
+    const filterdData = Restaurants.filter((data) => {
+      let isValid = true;
+      for (key in filters) {
+        isValid = isValid && data[key] == filters[key];
+      }
+      return isValid;
+    })
+
+
     return res.status(200).json({
       message: "Restaurants fetched successfully",
       total: total,
@@ -25,7 +36,7 @@ exports.getAllRestaurants = async function (req, res, next) {
       prev: page - 1,
       hasNext: page * limit < total,
       hasPrev: page > 1,
-      data: Restaurants.map((item) => ({
+      data: filterdData.map((item) => ({
         ...item._doc,
         image: noImage('uploads/restaurants/', item.image)
       }))
