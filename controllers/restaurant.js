@@ -155,24 +155,35 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       const newRestro = new Restaurant({
         user: req.user.userId,
         name: name,
-        type: type,
-        ownerName: user.firstname + '' + user.lastname,
+        mobile: mobile,
         landline: landline,
-        mobile: user.mobile,
         image: image ? image.path : "",
+        owener: owener,
+        manager: manager,
+        orderContact: orderContact,
+        restaurantType: restaurantType,
+        yearOfBirth: yearOfBirth,
+        establistmentType: establistmentType,
+        cuisines: cuisines,
+        openTime: openTime,
+        closeTime: closeTime,
+        daysOpenInWeek: daysOpenInWeek,
+        menuImage: menuImage ? menuImage.path : "",
         costFor: costFor,
         address: address
       });
       await newRestro.save();
       return res.status(200).json({
         message: "Restaurants addedd successfully",
-        id: newRestro._id,
-        data: newRestro
+        data: {
+          ...newRestro._doc,
+          image: noImage('uploads/restaurants/', newRestro.image),
+          menuImage: noImage('uploads/restaurants/', newRestro.menuImage)
+        }
       })
     }
   } catch (err) { next(err) }
 }
-
 
 /**
  *  Add Restaurant banner image
@@ -185,26 +196,39 @@ exports.addRestaurantBanner = async function (req, res, next) {
   try {
     await isVendor(req.user.userId, next);
     const image = req.file;
-    const restarantId = req.params.restarantId;
     const userId = req.user.userId;
-    const restaurant = await Restaurant.findOne({ user: userId, _id: restarantId });
+    const restarantId = req.params.restarantId;
+    const restaurant = await Restaurant.findById(restarantId);
+
+    // if not 
+    if (restaurant.user !== userId) {
+      deleteFile(image.path)
+      throw hasError("Restaurant not found", 400, next);
+    }
+
     if (!restaurant) {
       deleteFile(image.path)
       throw new Error("Restaurant not found");
     }
+
     if (!image) {
       deleteFile(image.path)
       throw new Error("Please select restaurant hero image");
     }
+
     if (image) {
       deleteFile(restaurant.avatar);
-      restaurant.avatar = image.path;
+      restaurant.image = image.path;
     }
     await restaurant.save();
     return res.status(200).json({
       message: "Restaurant hero image updated successfully",
-      id: restaurant._id,
-      data: restaurant
+      id: restarantId,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image),
+        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
+      }
     });
   }
   catch (err) {
@@ -213,49 +237,123 @@ exports.addRestaurantBanner = async function (req, res, next) {
   }
 }
 
+
 /**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
+ * Activate restaurant
  */
-exports.addMenus = async function (req, res, next) {
+exports.openRestaurant = async function (req, res, next) {
   try {
-    await isVendor(req.user.userId, next);
-    validationError(req, next)
+    await isAdmin(req.user.userId);
     const restarantId = req.params.restarantId;
-    const menuId = req.params.menuId;
-    const userId = req.user.userId;
-    const isRestaurantExist = await Restaurant.findOne({ user: userId, _id: restarantId });
-    const { title } = req.body;
-
-    if (!isRestaurantExist) {
-      throw new Error("Restaurant is not existed");
+    const restaurant = await Restaurant.findById(restarantId);
+    console.log('restarantId', restarantId, restaurant)
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
     }
 
-    const menus = isRestaurantExist.menus;
-    const slug = title.replace(/\s+/, '-').toLowerCase();
-    const isMenuExist = menus.find(x => x._id == menuId);
-    if (isMenuExist) {
-      const index = menus.findIndex(x => x._id == menuId);
-      const menu = menus[index];
-      menu.title = title;
-      menu.slug = slug;
-      menus[index] = menu;
-    } else {
-      const menu = menus.find(x => x.slug === slug);
-      if (menu) {
-        throw new Error("Menu already existed");
-      }
-      menus.push({ title: title, slug: slug });
-    }
-    await isRestaurantExist.save();
+    restaurant.isOpen = true;
+    restaurant.isClose = false;
+    await restaurant.save();
     return res.status(200).json({
-      message: "Menu added successfully",
-      data: isRestaurantExist
+      message: "Restaurant deactivated successfully!",
+      id: restarantId,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image),
+        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
+      }
     })
+
+  } catch (err) {
+    next(err)
   }
-  catch (err) {
+}
+/**
+ * Deactivate Restaurant
+ */
+exports.closeRestaurant = async function (req, res, next) {
+  try {
+    await isAdmin(req.user.userId);
+    const restarantId = req.params.restarantId;
+    const restaurant = await Restaurant.findById(restarantId);
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    restaurant.isClose = true;
+    restaurant.isOpen = false;
+    await restaurant.save();
+    return res.status(200).json({
+      message: "Restaurant activated successfully!",
+      id: restarantId,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image),
+        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
+      }
+    })
+
+  } catch (err) {
+    next(err)
+  }
+}
+
+
+
+/**
+ * Activate restaurant
+ */
+exports.deactivateRestaurant = async function (req, res, next) {
+  try {
+    await isAdmin(req.user.userId);
+    const restarantId = req.params.restarantId;
+    const restaurant = await Restaurant.findById(restarantId);
+    console.log('restarantId', restarantId, restaurant)
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    restaurant.active = false;
+    await restaurant.save();
+    return res.status(200).json({
+      message: "Restaurant deactivated successfully!",
+      id: restarantId,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image),
+        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
+      }
+    })
+
+  } catch (err) {
+    next(err)
+  }
+}
+/**
+ * Deactivate Restaurant
+ */
+exports.activateRestaurant = async function (req, res, next) {
+  try {
+    await isAdmin(req.user.userId);
+    const restarantId = req.params.restarantId;
+    const restaurant = await Restaurant.findById(restarantId);
+    if (!restaurant) {
+      throw new Error("Restaurant not found");
+    }
+
+    restaurant.active = true;
+    await restaurant.save();
+    return res.status(200).json({
+      message: "Restaurant activated successfully!",
+      id: restarantId,
+      data: {
+        ...restaurant._doc,
+        image: noImage('uploads/restaurants/', restaurant.image),
+        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
+      }
+    })
+
+  } catch (err) {
     next(err)
   }
 }

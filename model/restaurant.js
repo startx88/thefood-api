@@ -25,11 +25,13 @@ const restaurantSchema = new Schema({
     foodOffer: { type: [String] }
   },
   cuisines: { type: [String], required: true, trim: true },
-  openAt: { type: Date, required: true, trim: true },
-  closeAt: { type: Date, required: true, trim: true },
+  openTime: { type: Date, required: true, trim: true },
+  closeTime: { type: Date, required: true, trim: true },
   daysOpenInWeek: { type: [String] },
   menuImage: { type: String },
   costFor: { type: Number, },
+  isOpen: { type: Boolean, required: true, default: true },
+  isClose: { type: Boolean, default: false },
   address: {
     address: { type: String, required: true, trim: true },// k-81, arihant arden
     landmark: { type: String, required: true, trim: true }, // near bishrakh

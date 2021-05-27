@@ -1,7 +1,7 @@
 const route = require('express').Router();
 const Restaurant = require("../model/restaurant");
 const multer = require('multer')
-const { getAllRestaurants, getRestaurant, addMenus, addRestaurantBanner, getMyRestaurant, addUpdateRestaurant } = require('../controllers/restaurant')
+const { getAllRestaurants, getRestaurant, addRestaurantBanner, openRestaurant, closeRestaurant, activateRestaurant, deactivateRestaurant, getMyRestaurant, addUpdateRestaurant } = require('../controllers/restaurant')
 const { body } = require('express-validator')
 const { filterFiles } = require('../utils/file');
 const { auth } = require('../middleware/auth');
@@ -55,12 +55,24 @@ route.post('/:id?', upload.single('image'), [
 route.post('/upload/:restarantId', upload.single('image'), auth, addRestaurantBanner);
 
 //@NAME         Restaurant
-//@URL          localhost:5000/api/restaurant/upload/:restaurantId
+//@URL          localhost:5000/api/restaurant/activate/:restaurantId
 //@METHOD       GET
 //@ACCESS       PUBLIC
-route.post('/menus/:restarantId/:menuId?', [
-    body("title", "Restaurant title is required").notEmpty()
-], auth, addMenus)
+route.put('/activate/:restarantId', auth, activateRestaurant);
+
+//@NAME         Restaurant
+//@URL          localhost:5000/api/restaurant/deactivate/:restaurantId
+//@METHOD       GET
+//@ACCESS       PUBLIC
+route.put('/open/:restarantId', auth, openRestaurant);
+
+//@NAME         Restaurant
+//@URL          localhost:5000/api/restaurant/close/:restaurantId
+//@METHOD       GET
+//@ACCESS       PUBLIC
+route.put('/close/:restarantId', auth, closeRestaurant);
+
+
 
 
 module.exports = route;
