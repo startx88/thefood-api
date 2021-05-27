@@ -17,7 +17,6 @@ exports.getRecipes = async (req, res, next) => {
             .sort({ title: 1 })
             .limit(limit)
             .skip((page - 1) * limit);
-
         return req.res.json({
             totals: total,
             next: page + 1,
@@ -33,10 +32,62 @@ exports.getRecipes = async (req, res, next) => {
     }
 }
 
+
+/**
+ * Get recipe by menu
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.getRecipeByMenu = async function (req, res, next) {
+    try {
+        const menuId = req.params.menuId;
+        const recipe = Recipe.find({ menu: menuId });
+
+        if (!recipe) {
+            throw hasError(next);
+        }
+        return res.status(200).json({
+            message: 'Recipes fetched',
+            data: {
+                ...recipe._doc,
+                image: noImage('uploads/recipes/', recipe.image)
+            }
+        })
+    } catch (err) { next(err) }
+}
+
+/**
+ * Get recipe by menu
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.getRecipeByRestaurant = async function (req, res, next) {
+    try {
+        const restaurantId = req.params.restaurantId;
+        const recipe = Recipe.find({ restaurant: restaurantId });
+
+        if (!recipe) {
+            throw hasError(next);
+        }
+        return res.status(200).json({
+            message: 'Recipes fetched',
+            data: {
+                ...recipe._doc,
+                image: noImage('uploads/recipes/', recipe.image)
+            }
+        })
+    } catch (err) { next(err) }
+}
+
+
 // GET RECIPE
 exports.getRecipe = async (req, res, next) => {
-    const recipeId = req.params.recipeId;
     try {
+        const recipeId = req.params.recipeId;
         const recipe = await Recipe.findById(recipeId);
         if (!recipe) {
             return res.status(404).json({
@@ -47,6 +98,7 @@ exports.getRecipe = async (req, res, next) => {
             })
         }
         return res.status(200).json({
+            message: "Recipe fetch",
             data: {
                 ...recipe._doc,
                 image: noImage('uploads/recipes/', recipe.image)
@@ -65,30 +117,32 @@ exports.addRecipe = async (req, res, next) => {
         const userId = req.user.userId;
         const user = await Auth.findById(userId); // user profile
         const restaurant = await Restaurant.findOne({ user: userId }); // restaurant
-
-        const { name, type, price, description, ingredients, note, offer, menu } = req.body;
+        const { menu, name, recipeType, cuisineType, description, price, offer, note, ingredients } = req.body;
         const image = req.file;
         let slug = name.replace(/\s+/, '-').toLowerCase();
 
         const recipe = new Recipe({
             restaurant: restaurant._id,
+            menu,
             name,
             slug,
-            type,
+            recipeType,
+            cuisineType,
             price,
             offer,
-            menu,
             note,
             ingredients: ingredients,
             description,
-            image: image ? image.path : "",
+            image: image ? image.path : ""
         });
 
         const result = await recipe.save();
-
         return res.status(201).json({
             message: "Recipe added successfully",
-            data: result
+            data: {
+                ...result._doc,
+                image: noImage('uploads/recipes/', result.image)
+            }
         });
 
     } catch (error) {
@@ -110,23 +164,25 @@ exports.updateRecipe = async (req, res, next) => {
             error.statusCode = 404;
             throw next(error)
         }
-        const { name, type, price, description, ingredients, note, offer, menu } = req.body;
+        const { menu, name, recipeType, cuisineType, description, price, offer, note, ingredients } = req.body;
         const image = req.file;
         let slug = name.replace(/\s+/, '-').toLowerCase();
         recipe.name = name;
         recipe.slug = slug;
+        recipe.recipeType = recipeType;
+        recipe.cuisineType = cuisineType;
         recipe.type = type;
         recipe.price = price;
         recipe.offer = offer;
         recipe.menu = menu;
         recipe.note = note;
-        recipe.increment = ingredients;
+        recipe.ingredients = ingredients;
         recipe.description = description;
+        recipe.insertAt = Date.now();
         if (image) {
             deleteFile(recipe.image);
             recipe.image = image.path;
         }
-        recipe.insertAt = Date.now();
         const result = await recipe.save();
         return res.status(201).json({
             message: "Recipe updated successfully",

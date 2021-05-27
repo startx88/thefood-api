@@ -5,7 +5,7 @@ const { validationResult } = require('express-validator')
  * @param {*} statusCode 
  * @param {*} next 
  */
-const hasError = (message = "not found", statusCode = 404, next) => {
+const hasError = (message = "Not Found", statusCode = 404, next) => {
     const error = new Error(message);
     error.statusCode = statusCode;
     throw next(error);
