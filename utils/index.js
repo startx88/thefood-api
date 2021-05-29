@@ -31,7 +31,7 @@ const getTime = (time) => {
  * @returns 
  */
 const noImage = (folder, imagePath) => {
-  return path ? 'http://localhost:5001/' + folder + path.basename(imagePath) : 'http://localhost:5001/images/noimage.jpg';
+  return path ? 'http://localhost:3001/' + folder + path.basename(imagePath) : 'http://localhost:3001/images/noimage.jpg';
 }
 
 

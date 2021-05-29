@@ -23,7 +23,7 @@ exports.getAllRestaurants = async function (req, res, next) {
         isValid = isValid && data[key] == filters[key];
       }
       return isValid;
-    });
+    })
 
     return res.status(200).json({
       message: "Restaurants fetched successfully",
@@ -76,7 +76,7 @@ exports.getMyRestaurant = async function (req, res, next) {
     await isVendor(req.user.userId, next);
     const restaurant = await Restaurant.findOne({ user: userId });
     if (!restaurant) {
-      throw hasError("No restaurant found with this", 404, next);
+      throw hasError("No restaurant found", 404, next);
     }
     return res.status(200).json({
       message: 'Restaurant data fetched!',
