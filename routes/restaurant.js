@@ -24,17 +24,16 @@ const upload = multer({
 //@ACCESS       PUBLIC
 route.get('/', getAllRestaurants);
 
-//@NAME         Restaurant detail
-//@URL          localhost:5000/api/restaurant/:restaurantId
-//@METHOD       GET
-//@ACCESS       PUBLIC
-route.get('/:id', getRestaurant);
-
 //@NAME         Restaurant vendor detail
 //@URL          localhost:5000/api/restaurant/me
 //@METHOD       GET
 //@ACCESS       PUBLIC
 route.get('/me', auth, getMyRestaurant);
+//@NAME         Restaurant detail
+//@URL          localhost:5000/api/restaurant/:restaurantId
+//@METHOD       GET
+//@ACCESS       PUBLIC
+route.get('/:id', getRestaurant);
 
 
 //@NAME         Restaurant
@@ -43,8 +42,8 @@ route.get('/me', auth, getMyRestaurant);
 //@ACCESS       PUBLIC
 route.post('/:id?', upload.single('image'), [
     body("name", "Restaurant name is required").notEmpty(),
-    body("type", "Restaurant type is required").notEmpty(),
-    body("mobile", "Restaurant mobile is required").notEmpty()
+    body("mobile", "Restaurant type is required").notEmpty(),
+    body("yearOfBirth", "Year of establishment is required").notEmpty(),
 ], auth, addUpdateRestaurant);
 
 

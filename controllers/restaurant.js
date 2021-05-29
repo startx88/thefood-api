@@ -1,7 +1,6 @@
-const Auth = require("../model/auth");
 const Restaurant = require('../model/restaurant');
 const { hasError, validationError } = require('../middleware/validation');
-const { noImage, deleteFile, hasNoImage } = require('../utils');
+const { noImage, deleteFile } = require('../utils');
 const { isVendor } = require('../middleware/vendor')
 const { isAdmin } = require('../middleware/admin')
 
@@ -24,8 +23,7 @@ exports.getAllRestaurants = async function (req, res, next) {
         isValid = isValid && data[key] == filters[key];
       }
       return isValid;
-    })
-
+    });
 
     return res.status(200).json({
       message: "Restaurants fetched successfully",
@@ -78,11 +76,11 @@ exports.getMyRestaurant = async function (req, res, next) {
     await isVendor(req.user.userId, next);
     const restaurant = await Restaurant.findOne({ user: userId });
     if (!restaurant) {
-      throw new Error("There is no restaurant");
+      throw hasError("No restaurant found with this", 404, next);
     }
     return res.status(200).json({
       message: 'Restaurant data fetched!',
-      id: restaurant._id,
+      id: restaurant.id,
       data: {
         ...restaurant._doc,
         image: noImage('uploads/restaurants/', restaurant.image)
@@ -104,52 +102,46 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       name,
       mobile,
       landline,
-      owener,
+      owner,
       manager,
-      orderContact,
       restaurantType,
       yearOfBirth,
-      establistmentType,
+      servingType,
       cuisines,
       openTime,
       closeTime,
       daysOpenInWeek,
       costFor,
-      address
+      address,
+      isOpen,
+      isClose
     } = req.body;
-    const image = req.image;
-    const menuImage = req.menuImage;
-    const user = await Auth.findById(req.user.userId);
+    const image = req.file;
     const restaurant = await Restaurant.findById(Id);
     const isRestaurantExist = await Restaurant.findOne({ user: req.user.userId });
-
-    hasNoImage(image);
 
     if (restaurant) {
       restaurant.name = name;
       restaurant.mobile = mobile;
       restaurant.landline = landline;
-      restaurant.ownerName = owener;
-      restaurant.manager = manager;
-      restaurant.orderContact = orderContact;
+      restaurant.owner = JSON.parse(owner);
+      restaurant.manager = JSON.parse(manager);
       restaurant.restaurantType = restaurantType;
-      restaurant.yearOfBirth = yearOfBirth;
-      restaurant.establistmentType = establistmentType;
-      restaurant.cuisines = cuisines;
+      restaurant.yearOfBirth = new Date(yearOfBirth);
+      restaurant.servingType = servingType;
+      restaurant.cuisines = JSON.parse(cuisines);
       restaurant.openTime = openTime;
       restaurant.closeTime = closeTime;
-      restaurant.daysOpenInWeek = daysOpenInWeek;
-      restaurant.menuImage = menuImage.path;
-      restaurant.costFor = costFor;
-      restaurant.address = address;
+      restaurant.daysOpenInWeek = JSON.parse(daysOpenInWeek);
+      restaurant.costFor = +costFor;
+      restaurant.address = JSON.parse(address);
+      restaurant.isOpen = Boolean(JSON.parse(isOpen));
+      restaurant.isClose = Boolean(JSON.parse(isClose));
       if (image) {
         deleteFile(restaurant.image);
         restaurant.image = image.path;
       }
-      if (menuImage) {
-        deleteFile(restaurant.menuImage);
-        restaurant.menuImage = image.path;
-      }
+
       await restaurant.save();
       return res.status(200).json({
         message: "Restaurant updated",
@@ -157,44 +149,49 @@ exports.addUpdateRestaurant = async function (req, res, next) {
         data: {
           ...restaurant._doc,
           image: noImage('uploads/restaurants/', restaurant.image),
-          menuImage: noImage('uploads/restaurants/', restaurant.menuImage),
         }
       })
     } else {
       if (isRestaurantExist) {
+        deleteFile(image.path);
         throw new Error("Restaurant already existed!");
       }
+
       const newRestro = new Restaurant({
         user: req.user.userId,
         name: name,
         mobile: mobile,
         landline: landline,
         image: image ? image.path : "",
-        owener: owener,
-        manager: manager,
-        orderContact: orderContact,
+        owner: JSON.parse(owner),
+        manager: JSON.parse(manager),
+        isOpen: !!JSON.parse(isOpen),
+        isClose: !!JSON.parse(isClose),
         restaurantType: restaurantType,
-        yearOfBirth: yearOfBirth,
-        establistmentType: establistmentType,
-        cuisines: cuisines,
+        yearOfBirth: new Date(yearOfBirth),
+        servingType: servingType,
+        cuisines: JSON.parse(cuisines),
         openTime: openTime,
         closeTime: closeTime,
-        daysOpenInWeek: daysOpenInWeek,
-        menuImage: menuImage ? menuImage.path : "",
-        costFor: costFor,
-        address: address
+        daysOpenInWeek: JSON.parse(daysOpenInWeek),
+        costFor: +costFor,
+        address: JSON.parse(address)
       });
+
+      console.log(newRestro);
       await newRestro.save();
       return res.status(201).json({
         message: "Restaurants addedd successfully",
         data: {
           ...newRestro._doc,
           image: noImage('uploads/restaurants/', newRestro.image),
-          menuImage: noImage('uploads/restaurants/', newRestro.menuImage)
         }
       })
     }
-  } catch (err) { next(err) }
+  } catch (err) {
+    deleteFile(req.file.path);
+    next(err)
+  }
 }
 
 /**

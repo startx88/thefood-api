@@ -1,3 +1,4 @@
+const path = require("path");
 const { filterFiles, deleteFile } = require('./file')
 const { tryCatch } = require('./tryCatch');
 /**
@@ -29,13 +30,14 @@ const getTime = (time) => {
  * @param {*} path 
  * @returns 
  */
-const noImage = (folder, path) => {
-  return path ? 'http://localhost:5001/' + folder + p.basename(path) : 'http://localhost:5001/images/noimage.jpg';
+const noImage = (folder, imagePath) => {
+  return path ? 'http://localhost:5001/' + folder + path.basename(imagePath) : 'http://localhost:5001/images/noimage.jpg';
 }
 
 
-const hasNoImage = (image) => {
+const hasNoImage = (image, next) => {
   if (!image) {
+    deleteFile(image.path)
     const error = new Error("Please select image");
     error.statusCode = 400;
     throw next(error)
