@@ -26,7 +26,6 @@ exports.userRegister = async function (req, res, next) {
     const token = await Auth.generateToken(authUser);
     authUser.token = token;
     authUser.tokenExpire = getTime(1);
-
     const result = await authUser.save();
     // send user data
     return res.status(201).json({

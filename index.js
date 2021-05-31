@@ -29,6 +29,7 @@ const categoryRoute = require('./routes/category');
 const subcategoryRoute = require('./routes/subcat');
 const restaurantRoute = require('./routes/restaurant')
 const menuRoute = require('./routes/menu')
+const cuisineRoute = require('./routes/cuisine')
 
 app.use('/api/auth', auth);
 app.use('/api/profile', profileRoute);
@@ -37,6 +38,7 @@ app.use('/api/subcategory', subcategoryRoute);
 app.use('/api/recipe', recipeRoute);
 app.use('/api/restaurant', restaurantRoute)
 app.use('/api/menu', menuRoute)
+app.use('/api/cuisine', cuisineRoute)
 
 
 // Errors 

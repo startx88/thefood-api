@@ -23,7 +23,12 @@ exports.getAllRestaurants = async function (req, res, next) {
         isValid = isValid && data[key] == filters[key];
       }
       return isValid;
-    })
+    });
+
+    for (let i in filterdData) {
+      filterdData[i].image = noImage('uploads/restaurants/', filterdData[i].image);
+      filterdData[i].menuImage = noImage('uploads/restaurants/', filterdData[i].menuImage);
+    }
 
     return res.status(200).json({
       message: "Restaurants fetched successfully",
@@ -34,10 +39,7 @@ exports.getAllRestaurants = async function (req, res, next) {
       prev: page - 1,
       hasNext: page * limit < total,
       hasPrev: page > 1,
-      data: filterdData.map((item) => ({
-        ...item._doc,
-        image: noImage('uploads/restaurants/', item.image)
-      }))
+      data: filterdData
     });
   } catch (err) { next(err) }
 }
@@ -57,15 +59,9 @@ exports.getRestaurant = async function (req, res, next) {
     if (!restaurant) {
       throw new Error("There is no restaurant");
     }
-    return res.status(200).json({
-      message: 'Restaurant data fetched!',
-      id: Id,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image)
-      }
-    })
-
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image)
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage)
+    return res.status(200).send(restaurant)
   } catch (err) { next(err) }
 }
 
@@ -78,19 +74,11 @@ exports.getMyRestaurant = async function (req, res, next) {
     if (!restaurant) {
       throw hasError("No restaurant found", 404, next);
     }
-    return res.status(200).json({
-      message: 'Restaurant data fetched!',
-      id: restaurant.id,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image)
-      }
-    })
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image)
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage)
+    return res.status(200).send(restaurant)
   } catch (err) { next(err) }
 }
-
-
-
 
 // add / udpate addUpdateRestaurant
 exports.addUpdateRestaurant = async function (req, res, next) {
@@ -143,14 +131,9 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       }
 
       await restaurant.save();
-      return res.status(200).json({
-        message: "Restaurant updated",
-        id: Id,
-        data: {
-          ...restaurant._doc,
-          image: noImage('uploads/restaurants/', restaurant.image),
-        }
-      })
+      restaurant.image = noImage('uploads/restaurants/', restaurant.image)
+      restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage)
+      return res.status(200).send(restaurant)
     } else {
       if (isRestaurantExist) {
         deleteFile(image.path);
@@ -177,16 +160,10 @@ exports.addUpdateRestaurant = async function (req, res, next) {
         costFor: +costFor,
         address: JSON.parse(address)
       });
-
-      console.log(newRestro);
       await newRestro.save();
-      return res.status(201).json({
-        message: "Restaurants addedd successfully",
-        data: {
-          ...newRestro._doc,
-          image: noImage('uploads/restaurants/', newRestro.image),
-        }
-      })
+      newRestro.image = noImage('uploads/restaurants/', newRestro.image);
+      newRestro.menuImage = noImage('uploads/restaurants/', newRestro.menuImage);
+      return res.status(201).send(newRestro)
     }
   } catch (err) {
     deleteFile(req.file.path);
@@ -230,15 +207,9 @@ exports.addRestaurantBanner = async function (req, res, next) {
       restaurant.image = image.path;
     }
     await restaurant.save();
-    return res.status(200).json({
-      message: "Restaurant hero image updated successfully",
-      id: restarantId,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image),
-        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
-      }
-    });
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image);
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage);
+    return res.status(200).send(restaurant)
   }
   catch (err) {
     deleteFile(req.file.path);
@@ -262,15 +233,9 @@ exports.openRestaurant = async function (req, res, next) {
     restaurant.isOpen = true;
     restaurant.isClose = false;
     await restaurant.save();
-    return res.status(200).json({
-      message: "Restaurant deactivated successfully!",
-      id: restarantId,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image),
-        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
-      }
-    })
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image);
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage);
+    return res.status(200).send(restaurant)
 
   } catch (err) {
     next(err)
@@ -284,21 +249,17 @@ exports.closeRestaurant = async function (req, res, next) {
     await isVendor(req.user.userId);
     const restarantId = req.params.restarantId;
     const restaurant = await Restaurant.findById(restarantId);
+
     if (!restaurant) {
       throw new Error("Restaurant not found");
     }
     restaurant.isClose = true;
     restaurant.isOpen = false;
+
     await restaurant.save();
-    return res.status(200).json({
-      message: "Restaurant activated successfully!",
-      id: restarantId,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image),
-        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
-      }
-    })
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image);
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage);
+    return res.status(200).send(restaurant)
 
   } catch (err) {
     next(err)
@@ -322,15 +283,9 @@ exports.deactivateRestaurant = async function (req, res, next) {
 
     restaurant.active = false;
     await restaurant.save();
-    return res.status(200).json({
-      message: "Restaurant deactivated successfully!",
-      id: restarantId,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image),
-        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
-      }
-    })
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image);
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage);
+    return res.status(200).send(restaurant)
 
   } catch (err) {
     next(err)
@@ -350,15 +305,9 @@ exports.activateRestaurant = async function (req, res, next) {
 
     restaurant.active = true;
     await restaurant.save();
-    return res.status(200).json({
-      message: "Restaurant activated successfully!",
-      id: restarantId,
-      data: {
-        ...restaurant._doc,
-        image: noImage('uploads/restaurants/', restaurant.image),
-        menuImage: noImage('uploads/restaurants/', restaurant.menuImage)
-      }
-    })
+    restaurant.image = noImage('uploads/restaurants/', restaurant.image);
+    restaurant.menuImage = noImage('uploads/restaurants/', restaurant.menuImage);
+    return res.status(200).send(restaurant)
 
   } catch (err) {
     next(err)

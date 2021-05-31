@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 
 // Cuisine type
 const cuisineSchema = new Schema({
-  name: { type: String, required: true },
+  title: { type: String, required: true },
+  image: { type: String },
   slug: { type: String, required: true },
   active: { type: Boolean, default: true },
   insertAt: { type: Date, default: Date.now }
