@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config')
 
+
+
 // auth schema
 const authSchema = new Schema({
   firstname: { type: String, required: true, trim: true, },
@@ -13,13 +15,15 @@ const authSchema = new Schema({
   mobile: { type: String, required: true, trim: true, unique: true, index: true },
   verify: { type: Boolean },
   active: { type: Boolean, default: true },
-  role: { type: String, default: 'user', enum: ['admin', 'chef', 'vendor', 'user'] },
+  role: { type: String, default: 'user', enum: ['admin', 'chef', 'partner', 'user'] },
   token: { type: String, },
   refereshToken: { type: String },
+  tokenExpire: { type: String },
   insertAt: { type: Date, default: Date.now }
 }, {
   toJSON: {
-    transform(_, ret) {
+    timestamps: true,
+    transform(doc, ret) {
       ret.id = ret._id;
       ret.password = null;
       delete ret._id;

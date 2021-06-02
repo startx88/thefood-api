@@ -1,75 +1,54 @@
 const Category = require("../model/category");
-const { validationResult } = require('express-validator');
+const { validationError } = require('../middleware/validation');
 const { noImage, deleteFile } = require('../utils');
-const { tryCatch } = require('../utils/tryCatch')
 const { isnotImage } = require("../utils/validation");
-const { isAdmin } = require('../middleware/admin')
-// GET ALL CATEGORIES
-exports.getCategories = (req, res, next) => {
-    const page = +req.query.page || 1;
-    const PER_PAGE = +req.query.per_page || 5;
-    tryCatch(async () => {
-        const totals = await Category.find().countDocuments();
-        const categories = await Category.find().select('-__v');
-        if (!categories) {
-            return res.status(200).json({
-                message: "No category found",
-                data: categories
-            })
-        }
-        return res.status(200).json({
-            message: "No category found",
-            // totals: totals,
-            // page: page,
-            // next: page + 1,
-            // prev: page - 1,
-            // hasNext: Math.floor(totals / PER_PAGE),
-            data: categories.map(cat => ({
-                ...cat._doc,
-                image: noImage('uploads/category/', cat.image),
-            }))
-        })
+const { isAdmin } = require('../middleware/admin');
 
-    }, next)
+// GET ALL CATEGORIES
+exports.getCategories = async (req, res, next) => {
+    try {
+        const filters = req.query;
+        const categories = await Category.find();
+        const filterdData = categories.filter((data) => {
+            let isValid = true;
+            for (key in filters) {
+                isValid = isValid && data[key] == filters[key];
+            }
+            return isValid;
+        });
+        for (let i in filterdData) {
+            filterdData[i].image = noImage('uploads/category/', filterdData[i].image);
+        }
+        return res.status(200).send(filterdData)
+
+    } catch (err) {
+        next(err)
+    }
 }
 
 
 // ADD CATEGORY
-exports.addUpdateCategory = (req, res, next) => {
-    const categoryId = req.params.categoryId;
-    tryCatch(async () => {
-        const errors = validationResult(req);
+exports.addUpdateCategory = async (req, res, next) => {
+    try {
+        const categoryId = req.params.categoryId;
+        validationError(req, next);
         await isAdmin(req.user.userId, next);
-        if (!errors.isEmpty()) {
-            const error = new Error(errors.array()[0].msg);
-            error.statusCode = 403;
-            throw next(error)
-        }
-        const { name, description } = req.body;
-        let slug = req.body.slug;
+        const { title, description } = req.body;
         let image = req.file;
-        if (slug === "") {
-            slug = name.replace(/\s+/, '-').toLowerCase();
-        }
-
+        const slug = title.replace(/\s+/, '-').toLowerCase();
         const categoryExist = await Category.findById(categoryId);
-
         if (categoryExist) {
-            categoryExist.name = name;
+            categoryExist.title = title;
             categoryExist.slug = slug;
             categoryExist.description = description;
+            categoryExist.insertAt = Date.now();
             if (image) {
                 deleteFile(categoryExist.image);
                 categoryExist.image = image.path
             }
             const result = await categoryExist.save();
-            return res.status(200).json({
-                message: "Category updated successfull.",
-                data: {
-                    ...result._doc,
-                    image: noImage('uploads/category/', result.image),
-                }
-            });
+            categoryExist.image = noImage('uploads/category/', categoryExist.image)
+            return res.status(200).send(result);
         } else {
             const isslug = await Category.findOne({ slug: slug });
             if (isslug) {
@@ -78,61 +57,52 @@ exports.addUpdateCategory = (req, res, next) => {
                 throw next(error)
             }
             const category = new Category({
-                name,
+                title,
                 description,
                 slug,
                 image: image ? image.path : ""
             });
             const result = await category.save();
-            return res.status(201).json({
-                message: "Category added successfully.",
-                data: {
-                    ...result._doc,
-                    image: noImage('uploads/category/', result.image),
-                }
-            });
+            category.image = noImage('uploads/category/', result.image)
+            return res.status(201).send(result);
         }
-    }, next)
+    } catch (err) {
+        deleteFile(req.file.path);
+        next(err)
+    }
 }
 
 // UPLOAD CATEGORY
-exports.uploadCategoryImage = (req, res, next) => {
+exports.uploadCategoryImage = async (req, res, next) => {
     const categoryId = req.params.categoryId;
-    tryCatch(async () => {
+    try {
         await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select('-__v');
         const image = req.file;
         if (!category) {
+            deleteFile(image.path);
             const error = new Error("category not found");
             error.statusCode = 403;
             throw next(error)
         }
-
         isnotImage(image);
-
         if (image) {
             deleteFile(category.image);
             category.image = image.path;
         }
-
         await category.save();
-
-        return res.status(200).json({
-            message: "Category image uploaded successfully.",
-            data: {
-                ...category._doc,
-                image: noImage('uploads/category/', category.image),
-            }
-        });
-
-
-    }, next)
+        category.image = noImage('uploads/category/', category.image)
+        return res.status(200).send(category);
+    } catch (err) {
+        deleteFile(req.file.path);
+        next(err)
+    }
 }
 
 // DELETE CATEGORY
-exports.deleteCategory = (req, res, next) => {
+exports.deleteCategory = async (req, res, next) => {
     const categoryId = req.params.categoryId;
-    tryCatch(async () => {
+    try {
         await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select("-__v");
         if (!category) {
@@ -140,24 +110,21 @@ exports.deleteCategory = (req, res, next) => {
             error.statusCode = 404;
             throw next(error)
         }
-
         if (category) {
             deleteFile(category.image);
         }
         await category.remove();
-        return res.status(200).json({
-            message: "Category deleted successfully!",
-            data: category,
-            id: categoryId
-        })
-
-    }, next)
+        category.image = noImage('uploads/category/', category.image)
+        return res.status(200).send(category);
+    } catch (err) {
+        next(err)
+    }
 }
 
 // Active Category
-exports.activeCategory = (req, res, next) => {
+exports.activeCategory = async (req, res, next) => {
     const categoryId = req.params.categoryId;
-    tryCatch(async () => {
+    try {
         await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select("-__v");
         if (!category) {
@@ -166,60 +133,31 @@ exports.activeCategory = (req, res, next) => {
             throw next(error)
         }
 
-        if (category.active) {
-            return res.status(200).json({
-                message: "Category already activated!",
-                categoryId: categoryId,
-                data: {
-                    ...category._doc,
-                    image: noImage('uploads/category/', category.image),
-                }
-            })
-        }
         category.active = true;
         await category.save();
-        return res.status(200).json({
-            message: "Category activated successfully",
-            categoryId: categoryId,
-            data: {
-                ...category._doc,
-                image: noImage('uploads/category/', category.image),
-            }
-        })
+        category.image = noImage('uploads/category/', category.image)
+        return res.status(200).send(category);
 
-    }, next)
+    } catch (err) {
+        next(err)
+    }
 }
 
-exports.deactivateCategory = (req, res, next) => {
+exports.deactivateCategory = async (req, res, next) => {
     const categoryId = req.params.categoryId;
-    tryCatch(async () => {
+    try {
         await isAdmin(req.user.userId, next);
         const category = await Category.findById(categoryId).select("-__v");
         if (!category) {
             const error = new Error("No category found");
             error.statusCode = 404;
             throw next(error)
-        }
-        if (!category.active) {
-            return res.status(200).json({
-                message: "Category already deactivated!",
-                categoryId: categoryId,
-                data: {
-                    ...category._doc,
-                    image: noImage('uploads/category/', category.image),
-                }
-            })
         }
         category.active = false;
         await category.save();
-        return res.status(200).json({
-            message: "Category deactivated successfully",
-            categoryId: categoryId,
-            data: {
-                ...category._doc,
-                image: noImage('uploads/category/', category.image),
-            }
-        })
-
-    }, next)
+        category.image = noImage('uploads/category/', category.image)
+        return res.status(200).send(category);
+    } catch (err) {
+        next(err)
+    }
 }

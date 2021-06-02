@@ -11,9 +11,7 @@ exports.userRegister = async function (req, res, next) {
       error.statusCode = 403;
       throw next(error)
     }
-
     const { firstname, lastname, email, password, mobile, role } = req.body;
-
     const authUser = new Auth({
       firstname,
       lastname,
@@ -32,7 +30,7 @@ exports.userRegister = async function (req, res, next) {
       message: "User reigstered successfully!",
       token: token,
       data: result,
-      expiresIn: 3600
+      expireIn: 3600
     })
 
   } catch (error) {
@@ -71,11 +69,11 @@ exports.userLogin = async function (req, res, next) {
     await auth.save();
 
     // send user data
-    return res.status(201).json({
+    return res.status(201).send({
       message: "User signin successfully!",
       token: token,
       data: auth,
-      expiresIn: 3600
+      expireIn: 3600
     })
   } catch (error) {
     next(error);

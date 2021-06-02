@@ -23,6 +23,9 @@ exports.getCuisines = function (req, res, next) {
       }
       return isValid;
     });
+    for (let i in filterdData) {
+      filterdData[i].image = noImage('uploads/cuisine/', filterdData[i].image);
+    }
     return res.status(200).send(filterdData);
   }, next)
 }
@@ -41,9 +44,8 @@ exports.addUpdateCuisine = function (req, res, next) {
     const cuisineId = req.params.cuisineId;
     const { title } = req.body;
     const image = req.file;
-    const slug = title.replace(/\s+/, -'').toLowerCase();
+    const slug = title.replace(/\s+/, '-').toLowerCase();
     const cuisine = await Cuisine.findById(cuisineId);
-
     if (cuisine) {
       cuisine.title = title;
       cuisine.slug = slug;
@@ -86,7 +88,7 @@ exports.deleteCuisines = function (req, res, next) {
   tryCatch(async () => {
     await isAdmin(req.user.userId);
     const cuisineId = req.params.cuisineId;
-    const cuisine = await cuisines.findById(cuisineId);
+    const cuisine = await Cuisine.findById(cuisineId);
     if (!cuisine) {
       hasError("Cuisine not found", 404, next);
     }

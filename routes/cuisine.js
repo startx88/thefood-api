@@ -30,7 +30,7 @@ route.get('/', auth, getCuisines);
 //@URL          /api/cuisine
 //@METHOD       POST
 //@ACCESS       PUBLIC
-route.post('/:cuisineId?', auth, [body("title", "title is required").notEmpty()], upload.single('image'), addUpdateCuisine);
+route.post('/:cuisineId?', upload.single('image'), [body("title", "title is required").notEmpty()], auth, addUpdateCuisine);
 
 //@NAME         cuisine
 //@URL          /api/cuisine

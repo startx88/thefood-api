@@ -1,202 +1,153 @@
 const Subcategory = require("../model/subcat");
-const { validationResult } = require('express-validator');
+const { validationError } = require('../middleware/validation');
 const { noImage, deleteFile } = require('../utils');
-const { tryCatch } = require('../utils/tryCatch')
 const { isnotImage } = require("../utils/validation")
 const { isAdmin } = require('../middleware/admin')
 
 // GET ALL CATEGORIES
-exports.getSubCategories = (req, res, next) => {
-    const page = +req.query.page || 1;
-    const PER_PAGE = +req.query.per_page || 5;
-    tryCatch(async () => {
-        const totals = await Subcategory.find().countDocuments();
-        const subcats = await Subcategory.find().select('-__v');
-        if (!subcats) {
-            return res.status(200).json({
-                message: "No sub-category found",
-                data: subcats
-            })
+exports.getSubCategories = async (req, res, next) => {
+    try {
+        const filters = req.query;
+        const data = await Subcategory.find();
+        const filterdData = data.filter((data) => {
+            let isValid = true;
+            for (key in filters) {
+                isValid = isValid && data[key] == filters[key];
+            }
+            return isValid;
+        });
+        for (let i in filterdData) {
+            filterdData[i].image = noImage('uploads/subcategory/', filterdData[i].image);
         }
-        return res.status(200).json({
-            message: "No sub-category found",
-            // totals: totals,
-            // page: page,
-            // next: page + 1,
-            // prev: page - 1,
-            // hasNext: Math.floor(totals / PER_PAGE),
-            data: subcats.map(subcat => ({
-                ...subcat._doc,
-                image: noImage('uploads/subcategory/', subcat.image),
-            }))
-        })
-
-    }, next)
+        return res.status(200).send(filterdData)
+    } catch (err) {
+        next(err)
+    }
 }
 
 
 // ADD CATEGORY
-exports.addUpdateSubCategory = (req, res, next) => {
-    const subcatId = req.params.subcatId;
-    tryCatch(async () => {
+exports.addUpdateSubCategory = async (req, res, next) => {
+    try {
+        const subcatId = req.params.subcatId;
+        validationError(req, next);
         await isAdmin(req.user.userId, next);
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            const error = new Error(errors.array()[0].msg);
-            error.statusCode = 403;
-            throw next(error)
-        }
-        const { name, description } = req.body;
-        let slug = req.body.slug;
+        const { title, description } = req.body;
         let image = req.file;
-        if (slug === "") {
-            slug = name.replace(/\s+/, '-').toLowerCase();
-        }
-
+        let slug = title.replace(/\s+/, '-').toLowerCase();
         const subcatExist = await Subcategory.findById(subcatId);
 
         if (subcatExist) {
-            subcatExist.name = name;
+            subcatExist.title = title;
             subcatExist.slug = slug;
             subcatExist.description = description;
-            //subcatExist.category = category;
+            subcatExist.category = category;
             if (image) {
                 deleteFile(subcatExist.image);
                 subcatExist.image = image.path
             }
             await subcatExist.save();
-            return res.status(200).json({
-                message: "Subcategory updated successfull.",
-                data: {
-                    ...subcatExist._doc,
-                    image: noImage('uploads/subcategory/', subcatExist.image),
-                }
-            });
+            await subcatExist.save();
+            subcatExist.image = noImage('uploads/subcategory/', subcatExist.image)
+            return res.status(200).send(subcatExist);
         } else {
             const isslug = await Subcategory.findOne({ slug: slug });
             if (isslug) {
                 const error = new Error("Subcategory already existed");
                 error.statusCode = 403;
+                deleteFile(image.path);
                 throw next(error)
             }
             const subcat = new Subcategory({
-                name,
-                description,
+                title,
                 slug,
+                description,
                 image: image ? image.path : "",
-                //category: category
+                category: category
             });
             await subcat.save();
-            return res.status(201).json({
-                message: "Subcategory added successfully.",
-                data: {
-                    ...subcat._doc,
-                    image: noImage('uploads/subcategory/', subcat.image),
-                }
-            });
+            subcat.image = noImage('uploads/subcategory/', subcat.image)
+            return res.status(201).send(subcat);
         }
-    }, next)
+    } catch (err) {
+        deleteFile(req.file.path);
+        next(err)
+    }
 }
 
 // UPLOAD CATEGORY
-exports.uploadsubCategoryImage = (req, res, next) => {
-    const subcatId = req.params.subcatId;
-    tryCatch(async () => {
+exports.uploadsubCategoryImage = async (req, res, next) => {
+    try {
         await isAdmin(req.user.userId, next);
-        const subcat = await Subcategory.findById(subcatId).select('-__v');
+        const subcatId = req.params.subcatId;
+        const subcat = await Subcategory.findById(subcatId);
         const image = req.file;
         if (!subcat) {
+            deleteFile(image.path);
             const error = new Error("subcategory not found");
             error.statusCode = 403;
             throw next(error)
         }
-
         isnotImage(image);
-
         if (image) {
             deleteFile(subcat.image);
             subcat.image = image.path;
         }
-
         await subcat.save();
+        subcat.image = noImage('uploads/subcategory/', subcat.image)
+        return res.status(200).send(subcat);
 
-        return res.status(200).json({
-            message: "Category image uploaded successfully.",
-            subcatId: subcatId,
-            data: {
-                ...subcat._doc,
-                image: noImage('uploads/subcategory/', subcat.image),
-            }
-        });
-
-
-    }, next)
+    } catch (err) {
+        deleteFile(req.file.path);
+        next(err)
+    }
 }
 
 // DELETE CATEGORY
-exports.deleteSubcategory = (req, res, next) => {
-    const subcatId = req.params.subcatId;
-    tryCatch(async () => {
+exports.deleteSubcategory = async (req, res, next) => {
+    try {
         await isAdmin(req.user.userId, next);
-        const subcat = await Subcategory.findById(subcatId).select("-__v");
+        const subcatId = req.params.subcatId;
+        const subcat = await Subcategory.findById(subcatId)
         if (!subcat) {
             const error = new Error("No category found");
             error.statusCode = 404;
             throw next(error)
         }
-
         if (subcat) {
             deleteFile(subcat.image);
         }
         await subcat.remove();
-        return res.status(200).json({
-            message: "Category deleted successfully!",
-            data: subcat,
-            id: subcatId
-        })
-
-    }, next)
+        subcat.image = noImage('uploads/subcategory/', subcat.image)
+        return res.status(200).send(subcat);
+    } catch (err) {
+        next(err)
+    }
 }
 
 // Active Category
-exports.activesubCategory = (req, res, next) => {
+exports.activesubCategory = async (req, res, next) => {
     const subcatId = req.params.subcatId;
-    tryCatch(async () => {
+    try {
         await isAdmin(req.user.userId, next);
-        const subcat = await Subcategory.findById(subcatId).select("-__v");
+        const subcat = await Subcategory.findById(subcatId);
         if (!subcat) {
             const error = new Error("No category found");
             error.statusCode = 404;
             throw next(error)
-        }
-
-        if (subcat.active) {
-            return res.status(200).json({
-                message: "Category already activated!",
-                subcatId: subcatId,
-                data: {
-                    ...subcat._doc,
-                    image: noImage('uploads/subcategory/', subcat.image),
-                }
-            })
         }
         subcat.active = true;
         await subcat.save();
-        return res.status(200).json({
-            message: "Category activated successfully",
-            recipeId: categoryId,
-            data: {
-                ...subcat._doc,
-                image: noImage('uploads/subcategory/', subcat.image),
-            }
-        })
-
-    }, next)
+        subcat.image = noImage('uploads/subcategory/', subcat.image)
+        return res.status(200).send(subcat);
+    } catch (err) {
+        next(err)
+    }
 }
 
-exports.deactivatesubCategory = (req, res, next) => {
+exports.deactivatesubCategory = async (req, res, next) => {
     const subcatId = req.params.subcatId;
-    tryCatch(async () => {
+    try {
         await isAdmin(req.user.userId, next);
         const subcat = await Subcategory.findById(subcatId).select("-__v");
         if (!subcat) {
@@ -204,26 +155,11 @@ exports.deactivatesubCategory = (req, res, next) => {
             error.statusCode = 404;
             throw next(error)
         }
-        if (!subcat.active) {
-            return res.status(200).json({
-                message: "Category already deactivated!",
-                subcatId: subcatId,
-                data: {
-                    ...subcat._doc,
-                    image: noImage('uploads/subcategory/', subcat.image),
-                }
-            })
-        }
         subcat.active = false;
         await subcat.save();
-        return res.status(200).json({
-            message: "Category deactivated successfully",
-            subcatId: subcatId,
-            data: {
-                ...subcat._doc,
-                image: noImage('uploads/subcategory/', subcat.image),
-            }
-        })
-
-    }, next)
+        subcat.image = noImage('uploads/subcategory/', subcat.image)
+        return res.status(200).send(subcat);
+    } catch (err) {
+        next(err)
+    }
 }

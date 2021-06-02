@@ -29,8 +29,7 @@ route.get('/', categoryController.getCategories)
 //@METHOD       POST
 //@ACCESS       PRIVATE
 route.post('/:categoryId?', upload.single('image'), [
-    body("name", "name is required!").notEmpty(),
-    body("description", "description is required!").notEmpty()
+    body("title", "title is required!").notEmpty(),
 ], auth, categoryController.addUpdateCategory);
 
 //@NAME         image upload

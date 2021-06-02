@@ -4,7 +4,7 @@ const Schema = monoose.Schema;
 
 // category schema
 const CategorySchema = new Schema({
-    name: { type: String, required: true },
+    title: { type: String, required: true },
     slug: { type: String, required: true },
     image: { type: String },
     description: { type: String },

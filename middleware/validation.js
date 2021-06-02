@@ -1,4 +1,5 @@
-const { validationResult } = require('express-validator')
+const { validationResult } = require('express-validator');
+const { deleteFile } = require('../utils');
 /**
  * Error handler
  * @param {*} message 
@@ -19,6 +20,7 @@ const hasError = (message = "Not Found", statusCode = 404, next) => {
 const validationError = (req, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        deleteFile(req.file.path);
         const error = new Error(errors.array()[0].msg);
         error.statusCode = 403;
         throw next(error);
