@@ -36,7 +36,7 @@ app.use('/api/profile', profileRoute);
 app.use('/api/category', categoryRoute);
 app.use('/api/subcategory', subcategoryRoute);
 app.use('/api/recipe', recipeRoute);
-app.use('/api/restaurant', restaurantRoute)
+app.use('/api/outlet', restaurantRoute)
 app.use('/api/menu', menuRoute)
 app.use('/api/cuisine', cuisineRoute)
 

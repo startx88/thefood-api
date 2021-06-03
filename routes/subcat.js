@@ -28,9 +28,7 @@ route.get('/', subcatController.getSubCategories)
 //@METHOD       POST
 //@ACCESS       PRIVATE
 route.post('/:subcatId?', upload.single('image'), [
-    body("name", "name is required!").notEmpty(),
-    body("description", "description is required!").notEmpty(),
-    // body("category", "category is required!").notEmpty()
+    body("title", "title is required!").notEmpty(),
 ], auth, subcatController.addUpdateSubCategory);
 
 //@NAME         image upload

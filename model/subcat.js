@@ -3,7 +3,7 @@ const Schema = monoose.Schema;
 
 // subcategory schema
 const SubcategorySchema = new Schema({
-    category: { type: Schema.Types.ObjectId, ref: 'Category' },
+    category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
     title: { type: String, required: true },
     slug: { type: String, required: true },
     image: { type: String },

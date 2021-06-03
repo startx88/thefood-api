@@ -1,9 +1,9 @@
 const monoose = require("mongoose");
 const Schema = monoose.Schema;
 
-
 // category schema
 const CategorySchema = new Schema({
+    restaurant: { type: Schema.Types.ObjectId, ref: 'Restaurant' },
     title: { type: String, required: true },
     slug: { type: String, required: true },
     image: { type: String },
@@ -22,4 +22,4 @@ const CategorySchema = new Schema({
 
 
 // export
-module.exports = monoose.model('Category', CategorySchema)
+module.exports = monoose.model('Category', CategorySchema);

@@ -1,65 +1,61 @@
-const Category = require("../model/category");
 const route = require('express').Router();
 const multer = require('multer')
-const categoryController = require('../controllers/category')
+const { activeDeactiveCategory, getCategories, getCategoryByRestaurantId, addUpdateCategory, deleteCategory } = require('../controllers/category')
 const { body } = require('express-validator')
 const { filterFiles } = require('../utils/file');
 const { auth } = require('../middleware/auth');
+const { Permission } = require('../middleware/permission')
 
 // UPLOAD CATEGORY IMAGE
 const upload = multer({
     storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            cb(null, 'uploads/category');
-        },
-        filename: (req, file, cb) => {
-            cb(null, Date.now().toString() + '-' + file.originalname);
-        }
-    }), fileFilter: filterFiles
+        destination: (req, file, cb) => cb(null, 'uploads/category'),
+        filename: (req, file, cb) => cb(null, Date.now().toString() + '-' + file.originalname)
+    }),
+    fileFilter: filterFiles
 })
 
 //@NAME         category
 //@URL          localhost:5000/api/category
 //@METHOD       GET
 //@ACCESS       PUBLIC
-route.get('/', categoryController.getCategories)
+route.get('/', getCategories)
+
+//@NAME         category
+//@URL          localhost:5000/api/category
+//@METHOD       GET
+//@ACCESS       PUBLIC
+route.get('/:restarantId', getCategoryByRestaurantId)
 
 //@NAME         add category
 //@URL          localhost:5000/api/category
 //@METHOD       POST
 //@ACCESS       PRIVATE
-route.post('/:categoryId?', upload.single('image'), [
-    body("title", "title is required!").notEmpty(),
-], auth, categoryController.addUpdateCategory);
-
-//@NAME         image upload
-//@URL          localhost:5000/api/category/upload/:userId
-//@METHOD       PUT
-//@ACCESS       PRIVATE
-route.put('/upload/:categoryId',
+route.post('/:restaurantId/:categoryId?',
     upload.single('image'),
-    auth,
-    categoryController.uploadCategoryImage);
+    [body("title", "Title is required!").notEmpty()],
+    auth, Permission, addUpdateCategory);
 
 //@NAME         active category
 //@URL          localhost:5000/api/category/activate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
 
-route.put('/activate/:categoryId', auth, categoryController.activeCategory);
+route.put('/:restarantId/activate/:categoryId', auth, Permission, activeDeactiveCategory);
 
 //@NAME         deactive category
 //@URL          localhost:5000/api/category/deactivate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
-route.put('/deactivate/:categoryId', auth, categoryController.deactivateCategory);
+route.put('/:restarantId/deactivate/:categoryId', auth, Permission, activeDeactiveCategory);
 
 //@NAME         delete category
 //@URL          localhost:5000/api/category/activate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
+route.delete('/:restarantId/delete/:categoryId', auth, Permission, deleteCategory);
 
-route.delete('/:categoryId', auth, categoryController.deleteCategory);
 
 
+// exports
 module.exports = route;

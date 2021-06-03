@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
 // restaurant schema
 const restaurantSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User' },
   name: { type: String, required: true, trim: true },
-  mobile: { type: String, required: true, trim: true, unique: true },
-  landline: { type: String },
   image: { type: String, required: true, trim: true },
+  email: { type: String, required: true, trim: true, unique: true },
+  mobile: { type: String, required: true, trim: true, unique: true },
+  website: { type: String, },
+  landline: { type: String },
+  description: { type: String },
   owner: {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, unique: true },
@@ -21,13 +25,12 @@ const restaurantSchema = new Schema({
   yearOfBirth: { type: Date, required: true, trim: true },
   servingType: { type: String, required: true, enum: ['dine-in', 'delivery', 'both'] },
   cuisines: { type: [String], required: true, trim: true },
-  openTime: { type: String, required: true, trim: true },
-  closeTime: { type: String, required: true, trim: true },
   daysOpenInWeek: { type: [String] },
+  timings: [{ day: { type: String, required: true }, from: { type: String }, to: { type: String } }],
+  openNow: { type: Boolean, required: true, default: true },
   menuImage: { type: String },
-  costFor: { type: Number, },
-  isOpen: { type: Boolean, required: true, default: true },
-  isClose: { type: Boolean, default: false },
+  costForTwo: { type: Number, },
+  isClosed: { type: Boolean, default: false },
   address: {
     address: { type: String, required: true, trim: true },// k-81, arihant arden
     landmark: { type: String, required: true, trim: true }, // near bishrakh

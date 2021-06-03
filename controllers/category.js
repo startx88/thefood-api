@@ -20,23 +20,38 @@ exports.getCategories = async (req, res, next) => {
             filterdData[i].image = noImage('uploads/category/', filterdData[i].image);
         }
         return res.status(200).send(filterdData)
-
     } catch (err) {
         next(err)
     }
 }
 
+// get categories by restaurant
+exports.getCategoryByRestaurantId = async (req, res, next) => {
+    try {
+        const restaurant = req.params.restarantId;
+        const categories = await Category.find({ restaurant });
+        if (!categories) {
+            return res.status(200).send([]);
+        }
+        for (let i in categories) {
+            categories[i].image = noImage('uploads/category/', categories[i].image);
+        }
+        return res.status(200).send(categories)
+    } catch (err) {
+        next(err)
+    }
+}
 
 // ADD CATEGORY
 exports.addUpdateCategory = async (req, res, next) => {
     try {
-        const categoryId = req.params.categoryId;
         validationError(req, next);
-        await isAdmin(req.user.userId, next);
+        const categoryId = req.params.categoryId;
+        const restaurant = req.params.restaurantId;
         const { title, description } = req.body;
         let image = req.file;
+        const categoryExist = await Category.findOne({ _id: categoryId, restaurant });
         const slug = title.replace(/\s+/, '-').toLowerCase();
-        const categoryExist = await Category.findById(categoryId);
         if (categoryExist) {
             categoryExist.title = title;
             categoryExist.slug = slug;
@@ -50,13 +65,14 @@ exports.addUpdateCategory = async (req, res, next) => {
             categoryExist.image = noImage('uploads/category/', categoryExist.image)
             return res.status(200).send(result);
         } else {
-            const isslug = await Category.findOne({ slug: slug });
-            if (isslug) {
-                const error = new Error("category already existed");
+            const hasCategory = await Category.findOne({ slug: slug });
+            if (hasCategory) {
+                const error = new Error("Category already existed");
                 error.statusCode = 403;
                 throw next(error)
             }
             const category = new Category({
+                restaurant,
                 title,
                 description,
                 slug,
@@ -74,9 +90,8 @@ exports.addUpdateCategory = async (req, res, next) => {
 
 // UPLOAD CATEGORY
 exports.uploadCategoryImage = async (req, res, next) => {
-    const categoryId = req.params.categoryId;
     try {
-        await isAdmin(req.user.userId, next);
+        const categoryId = req.params.categoryId;
         const category = await Category.findById(categoryId).select('-__v');
         const image = req.file;
         if (!category) {
@@ -101,20 +116,15 @@ exports.uploadCategoryImage = async (req, res, next) => {
 
 // DELETE CATEGORY
 exports.deleteCategory = async (req, res, next) => {
-    const categoryId = req.params.categoryId;
     try {
-        await isAdmin(req.user.userId, next);
-        const category = await Category.findById(categoryId).select("-__v");
+        const categoryId = req.params.categoryId;
+        const restaurant = req.params.restaurantId;
+        const category = await Category.findOne({ _id: categoryId, restaurant });
         if (!category) {
-            const error = new Error("No category found");
-            error.statusCode = 404;
-            throw next(error)
+            hasError(next);
         }
-        if (category) {
-            deleteFile(category.image);
-        }
+        if (category) deleteFile(category.image);
         await category.remove();
-        category.image = noImage('uploads/category/', category.image)
         return res.status(200).send(category);
     } catch (err) {
         next(err)
@@ -122,38 +132,15 @@ exports.deleteCategory = async (req, res, next) => {
 }
 
 // Active Category
-exports.activeCategory = async (req, res, next) => {
-    const categoryId = req.params.categoryId;
+exports.activeDeactiveCategory = async (req, res, next) => {
     try {
-        await isAdmin(req.user.userId, next);
-        const category = await Category.findById(categoryId).select("-__v");
+        const categoryId = req.params.categoryId;
+        const restaurant = req.params.restaurantId;
+        const category = await Category.findOne({ _id: categoryId, restaurant });
         if (!category) {
-            const error = new Error("No category found");
-            error.statusCode = 404;
-            throw next(error)
+            hasError(next);
         }
-
-        category.active = true;
-        await category.save();
-        category.image = noImage('uploads/category/', category.image)
-        return res.status(200).send(category);
-
-    } catch (err) {
-        next(err)
-    }
-}
-
-exports.deactivateCategory = async (req, res, next) => {
-    const categoryId = req.params.categoryId;
-    try {
-        await isAdmin(req.user.userId, next);
-        const category = await Category.findById(categoryId).select("-__v");
-        if (!category) {
-            const error = new Error("No category found");
-            error.statusCode = 404;
-            throw next(error)
-        }
-        category.active = false;
+        category.active = !category.active;
         await category.save();
         category.image = noImage('uploads/category/', category.image)
         return res.status(200).send(category);
@@ -161,3 +148,4 @@ exports.deactivateCategory = async (req, res, next) => {
         next(err)
     }
 }
+

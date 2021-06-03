@@ -1,6 +1,36 @@
 const Auth = require('../model/auth')
 const { validationResult } = require('express-validator')
-const { getTime } = require('../utils');
+const { getTime, noImage } = require('../utils');
+const { isAdmin } = require('../middleware/admin');
+
+/**
+ * get all users
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.getUsers = async function (req, res, next) {
+  try {
+    await isAdmin(req.user.userId, next);
+    const filters = req.query;
+    const users = await Auth.find();
+    const filterdData = users.filter((data) => {
+      let isValid = true;
+      for (key in filters) {
+        isValid = isValid && data[key] == filters[key];
+      }
+      return isValid;
+    });
+    for (let i in filterdData) {
+      filterdData[i].image = noImage('uploads/users/', filterdData[i].image);
+    }
+    return res.status(200).send(filterdData)
+
+  } catch (err) {
+    next(err)
+  }
+}
 
 // register 
 exports.userRegister = async function (req, res, next) {

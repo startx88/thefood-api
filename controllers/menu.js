@@ -21,11 +21,7 @@ exports.getMenuByRestaurant = async function (req, res, next) {
       throw new Error("Menu not found for this restaurant!");
     }
 
-    return res.status(200).json({
-      message: "Menu fetched",
-      data: menu
-    })
-
+    return res.status(200).send(menu)
   } catch (err) { next(err) }
 }
 
@@ -53,11 +49,7 @@ exports.addUpdateMenu = async function (req, res, next) {
       menu.offer = offer;
       menu.insertAt = Date.now()
       await menu.save();
-      return res.status(200).json({
-        message: "Menu updated successfully",
-        id: menuId,
-        data: menu
-      })
+      return res.status(200).send(menu)
     } else {
       const isMenu = await Menu.findOne({ slug: slug });
       if (isMenu) {
@@ -71,11 +63,7 @@ exports.addUpdateMenu = async function (req, res, next) {
         offer
       })
       await newMenu.save();
-      return res.status(201).json({
-        message: "Menu created successfully",
-        id: menuId,
-        data: newMenu
-      })
+      return res.status(201).send(menu)
     }
   } catch (err) { next(err) }
 }
@@ -100,10 +88,6 @@ exports.deleteMenu = async function (req, res, next) {
       throw next(error)
     }
     await menu.remove();
-    return res.status(200).json({
-      message: "Menu deleted successfully!",
-      id: menuId,
-      data: menu
-    })
+    return res.status(200).send(menu)
   } catch (err) { next(err) }
 }
