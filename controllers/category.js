@@ -1,8 +1,7 @@
 const Category = require("../model/category");
-const { validationError } = require('../middleware/validation');
+const { validationError, hasError } = require('../middleware/validation');
 const { noImage, deleteFile } = require('../utils');
 const { isnotImage } = require("../utils/validation");
-const { isAdmin } = require('../middleware/admin');
 
 // GET ALL CATEGORIES
 exports.getCategories = async (req, res, next) => {
@@ -42,9 +41,10 @@ exports.getCategoryByRestaurantId = async (req, res, next) => {
     }
 }
 
-// ADD CATEGORY
+// ADD CATEGORY 
 exports.addUpdateCategory = async (req, res, next) => {
     try {
+
         validationError(req, next);
         const categoryId = req.params.categoryId;
         const restaurant = req.params.restaurantId;
@@ -118,10 +118,13 @@ exports.uploadCategoryImage = async (req, res, next) => {
 exports.deleteCategory = async (req, res, next) => {
     try {
         const categoryId = req.params.categoryId;
-        const restaurant = req.params.restaurantId;
-        const category = await Category.findOne({ _id: categoryId, restaurant });
+        const restaurantId = req.params.restaurantId;
+        const category = await Category.findOne({ _id: categoryId, restaurant: restaurantId });
+
         if (!category) {
-            hasError(next);
+            const error = new Error('Category not fund');
+            error.statusCode = 404;
+            next(error)
         }
         if (category) deleteFile(category.image);
         await category.remove();
@@ -137,8 +140,11 @@ exports.activeDeactiveCategory = async (req, res, next) => {
         const categoryId = req.params.categoryId;
         const restaurant = req.params.restaurantId;
         const category = await Category.findOne({ _id: categoryId, restaurant });
+
         if (!category) {
-            hasError(next);
+            const error = new Error('Category not fund');
+            error.statusCode = 404;
+            next(error)
         }
         category.active = !category.active;
         await category.save();

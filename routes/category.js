@@ -13,7 +13,7 @@ const upload = multer({
         filename: (req, file, cb) => cb(null, Date.now().toString() + '-' + file.originalname)
     }),
     fileFilter: filterFiles
-})
+});
 
 //@NAME         category
 //@URL          localhost:5000/api/category
@@ -41,21 +41,29 @@ route.post('/:restaurantId/:categoryId?',
 //@METHOD       POST
 //@ACCESS       PRIVATE
 
-route.put('/:restarantId/activate/:categoryId', auth, Permission, activeDeactiveCategory);
+route.put('/:restaurantId/activate/:categoryId', auth, Permission, activeDeactiveCategory);
 
 //@NAME         deactive category
 //@URL          localhost:5000/api/category/deactivate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
-route.put('/:restarantId/deactivate/:categoryId', auth, Permission, activeDeactiveCategory);
+route.put('/:restaurantId/deactivate/:categoryId', auth, Permission, activeDeactiveCategory);
 
 //@NAME         delete category
 //@URL          localhost:5000/api/category/activate/:categoryId
 //@METHOD       POST
 //@ACCESS       PRIVATE
-route.delete('/:restarantId/delete/:categoryId', auth, Permission, deleteCategory);
+route.delete('/:restaurantId/delete/:categoryId', auth, Permission, deleteCategory);
 
 
 
 // exports
 module.exports = route;
+
+/**
+ * Category:
+ * Burger King:
+ * 1. Paneer
+ * 2. Chicken
+ * 3. Mutton
+ */

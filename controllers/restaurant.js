@@ -52,9 +52,11 @@ exports.getRestaurant = async function (req, res, next) {
 // get restaurant
 exports.getMyRestaurant = async function (req, res, next) {
   try {
+
     await isVendor(req.user.userId, next);
     const userId = req.user.userId;
     const restaurant = await Restaurant.findOne({ user: userId });
+    console.log(restaurant)
     if (!restaurant) {
       throw hasError("No restaurant found", 404, next);
     }
@@ -84,13 +86,11 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       servingType,
       cuisines,
       daysOpenInWeek,
-      timings,
+      from, to,
       openNow,
       costForTwo,
       isClosed,
       address,
-      isOpen,
-      isClose
     } = req.body;
     const image = req.file;
     const restaurant = await Restaurant.findById(Id);
@@ -110,7 +110,8 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       restaurant.servingType = servingType;
       restaurant.cuisines = JSON.parse(cuisines);
       restaurant.daysOpenInWeek = JSON.parse(daysOpenInWeek);
-      restaurant.timings = JSON.parse(timings);
+      restaurant.from = from;
+      restaurant.to = to;
       restaurant.openNow = Boolean(openNow);
       restaurant.costForTwo = +costForTwo;
       restaurant.isClosed = Boolean(JSON.parse(isClosed));
@@ -132,21 +133,21 @@ exports.addUpdateRestaurant = async function (req, res, next) {
       }
       const newRestro = new Restaurant({
         user: req.user.userId,
-        name: name,
-        email: email,
-        mobile: mobile,
-        website: website,
-        landline: landline,
-        description: description,
+        name,
+        email,
+        mobile,
+        website,
+        landline,
+        description,
         image: image ? image.path : "",
         owner: JSON.parse(owner),
         manager: JSON.parse(manager),
-        restaurantType: restaurantType,
+        restaurantType,
         yearOfBirth: new Date(yearOfBirth),
-        servingType: servingType,
+        servingType,
         cuisines: JSON.parse(cuisines),
         daysOpenInWeek: JSON.parse(daysOpenInWeek),
-        timings: JSON.parse(timings),
+        from, to,
         openNow: !!JSON.parse(openNow),
         isClosed: !!JSON.parse(isClosed),
         costForTwo: +costForTwo,
